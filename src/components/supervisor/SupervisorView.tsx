@@ -108,10 +108,10 @@ function CustomSelect({ value, options, onChange, placeholder }: {
 
       {open && (
         <div className="absolute bottom-full left-0 mb-1.5 z-[100] w-full bg-card border border-border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="max-h-48 overflow-y-auto p-1 scrollbar-none">
-            <div
+          <main className="flex-1 overflow-y-auto px-4 pb-12 pt-2 scrollbar-none snap-y snap-mandatory">
+        <div className="space-y-6">   <div
               onClick={() => { onChange(''); setOpen(false) }}
-              className="px-2.5 py-2 text-xs text-foreground/50 hover:bg-muted hover:text-foreground rounded-md cursor-pointer transition-colors mb-0.5"
+              className="px-2.5 py-2 text-sm text-foreground/50 hover:bg-muted hover:text-foreground rounded-md cursor-pointer transition-colors mb-0.5"
             >
               — Select —
             </div>
@@ -151,14 +151,14 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
   const hasAssignment = route.vehicle_no || route.driver_name || route.gt
 
   return (
-    <div className="h-full bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col">
+    <div className="bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col snap-start snap-always scroll-mt-4">
       {/* ── TOP: Route title + ticket count + icons ── */}
       <div className="px-4 pt-4 pb-3 border-b border-border rounded-t-2xl bg-card z-10">
         {/* Title */}
-        <h2 className="text-base font-bold text-foreground tracking-tight">
+        <h2 className="text-lg font-bold text-foreground tracking-tight">
           Route {route.route_name}
         </h2>
-        <p className="text-xs text-foreground/50 mt-0.5 font-medium">{route.logs.length} tickets</p>
+        <p className="text-sm text-foreground/50 mt-0.5 font-medium">{route.logs.length} tickets</p>
 
         {/* Sub-category icon chips with v3 colors */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -166,7 +166,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
             const { Icon, color, bg } = getSubIcon(sub)
             return (
               <div key={sub} title={sub}
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-semibold ${bg}`}>
+                className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-sm font-semibold ${bg}`}>
                 <Icon size={12} className={color} />
                 <span className={color}>{count}</span>
               </div>
@@ -177,7 +177,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
 
       {/* ── MIDDLE: Ticket list ── */}
       <div className="flex-1 overflow-y-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-foreground/5 sticky top-0">
               <th className="text-left px-4 py-2 font-medium text-foreground/50">Ticket</th>
@@ -190,7 +190,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
               const { Icon, color } = getSubIcon(log.sub_category ?? '')
               return (
                 <tr key={log.id} className="border-b border-border last:border-0 hover:bg-foreground/5 transition-colors">
-                  <td className="px-4 py-2.5 font-mono text-[11px] font-medium text-foreground/60 whitespace-nowrap">
+                  <td className="px-4 py-2.5 font-mono text-xs font-medium text-foreground/60 whitespace-nowrap">
                     {log.ticket_id}
                   </td>
                   <td className="px-2 py-2.5">
@@ -205,7 +205,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
                     <div className="flex items-center justify-end gap-1" title={log.sub_category ?? ''}>
                       <Icon size={13} className={color} />
                       {log.ticket_status && (
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
                           {log.ticket_status === 'Delivered' ? '✓' : log.ticket_status === 'Issue' ? '!' : log.ticket_status}
                         </span>
                       )}
@@ -225,19 +225,19 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
           <div className="grid grid-cols-2 gap-2">
             {/* Serial select */}
             <div>
-              <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Serial No.</p>
+              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Serial No.</p>
               <input
                 type="number"
                 value={route.vehicle_serial || ''}
                 onChange={e => onUpdate(route.route_name, 'vehicle_serial', parseInt(e.target.value) || null)}
                 placeholder="1, 2..."
-                className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2 py-1.5 text-xs shadow-sm transition-all placeholder:text-foreground/30"
+                className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2 py-2 text-sm shadow-sm transition-all placeholder:text-foreground/30"
               />
             </div>
             
             {/* GT select */}
             <div className="relative">
-              <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Ground Team</p>
+              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Ground Team</p>
               <CustomSelect
                 value={route.gt}
                 onChange={v => onUpdate(route.route_name, 'gt', v)}
@@ -254,7 +254,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
           <div className="grid grid-cols-2 gap-2">
             {/* Vehicle select */}
             <div className="relative">
-              <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Vehicle No.</p>
+              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Vehicle No.</p>
               <CustomSelect
                 value={route.vehicle_no}
                 onChange={v => {
@@ -269,7 +269,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
 
             {/* Driver Name */}
             <div className="relative">
-              <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Driver Name</p>
+              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Driver Name</p>
               <CustomSelect
                 value={route.driver_name || ''}
                 onChange={v => {
@@ -289,7 +289,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
           <button
             onClick={() => onSave(route.route_name)}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
           >
             {saving ? (
                <><div className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse"/>Saving...</>
@@ -301,7 +301,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
               navigator.clipboard.writeText(buildRouteMsg(route, selectedDate))
               setCopied(true); setTimeout(() => setCopied(false), 2000)
             }}
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold border transition-all
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border transition-all
               ${copied
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 : 'bg-background border-border text-foreground/70 hover:bg-muted/50 hover:border-foreground/20'
