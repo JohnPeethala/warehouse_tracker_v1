@@ -21,7 +21,7 @@ type Log = {
   sub_category: string | null; ticket_status: string | null; notes: string | null
 }
 type Vehicle  = { id: string; vehicle_no: string; default_driver: string | null }
-type GTMember = { id: string; first_name: string; last_name: string }
+type GTMember = { id: string; name: string }
 type RouteGroup = {
   route_name: string; logs: Log[]
   vehicle_no: string; driver_name: string; gt: string
@@ -243,7 +243,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
                 onChange={v => onUpdate(route.route_name, 'gt', v)}
                 placeholder="— Select —"
                 options={groundTeam.map(m => {
-                  const nm = `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()
+                  const nm = (m.name ?? '').trim()
                   return { label: nm, value: nm }
                 })}
               />

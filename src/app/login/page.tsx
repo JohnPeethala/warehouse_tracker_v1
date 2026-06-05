@@ -8,7 +8,7 @@ const STORAGE_KEY = 'wh_saved_login'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +21,7 @@ export default function LoginPage() {
       if (saved) {
         const { email: savedEmail, password: savedPassword } = JSON.parse(saved)
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setEmail(savedEmail ?? '')
+        setPhone(savedEmail ?? '')
         setPassword(savedPassword ?? '')
         setRemember(true)
       }
@@ -36,13 +36,14 @@ export default function LoginPage() {
     setLoading(true)
 
     if (remember) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, password }))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: phone, password }))
     } else {
       localStorage.removeItem(STORAGE_KEY)
     }
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const fakeEmail = `${phone}@warehouse.local`
+    const { error: authError } = await supabase.auth.signInWithPassword({ email: fakeEmail, password })
 
     if (authError) {
       setError(authError.message)
@@ -85,18 +86,19 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-xs font-medium text-foreground/60">
-                Email Address
+              <label htmlFor="phone" className="text-xs font-medium text-foreground/60">
+                Phone Number
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="1234567890"
                 required
-                autoComplete="username"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                autoComplete="tel"
+                pattern="[0-9]*"
+                value={phone}
+                onChange={e => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
                 className="w-full bg-background border border-border rounded-lg px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-foreground/30 focus:ring-2 focus:ring-foreground/[0.07] transition-all"
               />
             </div>

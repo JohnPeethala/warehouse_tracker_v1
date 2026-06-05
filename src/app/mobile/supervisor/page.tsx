@@ -37,7 +37,7 @@ export default async function SupervisorPage({
   // Fetch user profile for display name
   const { data: profile } = await supabase
     .from('profiles')
-    .select('first_name, last_name')
+    .select('name')
     .eq('id', user.id)
     .single()
 
@@ -56,13 +56,13 @@ export default async function SupervisorPage({
 
   const { data: groundTeam } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name')
+    .select('id, name')
     .eq('role', 'ground')
-    .order('first_name')
+    .order('name')
 
-  const displayName = profile
-    ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
-    : user.email?.split('@')[0] ?? 'Supervisor'
+  const displayName = profile?.name?.trim()
+    || user.email?.split('@')[0] 
+    || 'Supervisor'
 
   return (
     <SupervisorView

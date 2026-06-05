@@ -39,7 +39,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, first_name, last_name, role')
+    .select('id, name, role')
     .eq('id', user.id)
     .single()
 
@@ -47,7 +47,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
     redirect('/mobile/supervisor')
   }
 
-  const gtName = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+  const gtName = (profile?.name ?? '').trim()
   const today = searchParams.date || toYMD(new Date())
 
   // Fetch GT trip for today
