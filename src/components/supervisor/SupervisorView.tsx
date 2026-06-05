@@ -108,8 +108,8 @@ function CustomSelect({ value, options, onChange, placeholder }: {
 
       {open && (
         <div className="absolute bottom-full left-0 mb-1.5 z-[100] w-full bg-card border border-border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <main className="flex-1 overflow-y-auto px-4 pb-12 pt-2 scrollbar-none snap-y snap-mandatory">
-        <div className="space-y-6">   <div
+          <div className="max-h-48 overflow-y-auto p-1 scrollbar-none">
+            <div
               onClick={() => { onChange(''); setOpen(false) }}
               className="px-2.5 py-2 text-sm text-foreground/50 hover:bg-muted hover:text-foreground rounded-md cursor-pointer transition-colors mb-0.5"
             >
@@ -399,7 +399,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
           {/* ── Scrollable Cards ── */}
           <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-none p-3 gap-3">
             {routes.map(route => (
-              <div key={route.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center h-full">
+              <div key={route.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
                 <RouteCard
                   route={route}
                   vehicles={vehicles}
