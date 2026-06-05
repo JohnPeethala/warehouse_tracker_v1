@@ -67,15 +67,15 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   return (
     <div className="flex flex-col h-dvh bg-background">
       {/* ── Header ── */}
-      <header className="shrink-0 bg-card border-b border-border shadow-[0_1px_4px_-1px_rgba(0,0,0,0.06)] px-4 pt-12 pb-3 sticky top-0 z-50">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shadow-sm overflow-hidden bg-primary/10">
+      <header className="shrink-0 bg-card border-b border-border shadow-[0_1px_4px_-1px_rgba(0,0,0,0.06)] px-4 pt-4 pb-3 sticky top-0 z-50">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm overflow-hidden bg-primary/10">
               <img src="/logo.svg" alt="Warehouse Tracker Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <span className="block text-sm font-bold text-foreground leading-none">Warehouse OPs</span>
-              <span className="block text-[10px] text-foreground/50 mt-0.5 font-medium">{userName.split(' ')[0]}</span>
+              <span className="block text-base font-bold text-foreground leading-none">Warehouse OPs</span>
+              <span className="block text-xs text-foreground/50 mt-1 font-medium">{userName.split(' ')[0]}</span>
             </div>
           </div>
           <button onClick={handleSignOut} className="p-2 rounded-full hover:bg-muted text-foreground/50 transition-colors">
