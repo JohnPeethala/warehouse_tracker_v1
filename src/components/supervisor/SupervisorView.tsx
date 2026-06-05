@@ -135,7 +135,7 @@ function CustomSelect({ value, options, onChange, placeholder }: {
 function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave, saving }: {
   route: RouteGroup; vehicles: Vehicle[]; groundTeam: GTMember[]
   selectedDate: string
-  onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', v: any) => void
+  onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', v: string | number | null) => void
   onSave: (r: string) => void
   saving: boolean
 }) {
@@ -324,6 +324,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
   const [saving, setSaving] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoutes(groupByRoute(logs))
   }, [logs])
 
@@ -331,7 +332,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
     startTransition(() => router.push(`/mobile/supervisor?date=${d}`))
   }
 
-  function handleUpdate(routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', value: any) {
+  function handleUpdate(routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', value: string | number | null) {
     setRoutes(prev => prev.map(r => r.route_name === routeName ? { ...r, [field]: value } : r))
   }
 

@@ -28,6 +28,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   const [savingLog, setSavingLog] = useState<string | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalLogs(logs)
   }, [logs])
 

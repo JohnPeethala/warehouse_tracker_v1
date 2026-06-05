@@ -20,6 +20,7 @@ export default function LoginPage() {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const { email: savedEmail, password: savedPassword } = JSON.parse(saved)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setEmail(savedEmail ?? '')
         setPassword(savedPassword ?? '')
         setRemember(true)

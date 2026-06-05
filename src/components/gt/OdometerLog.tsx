@@ -23,7 +23,7 @@ export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver,
   })
   const [savingTrip, setSavingTrip] = useState(false)
 
-  async function saveTrip(field: keyof Trip, value: any) {
+  async function saveTrip(field: keyof Trip, value: string | number | null) {
     const newVal = { ...tripState, [field]: value }
     setTripState(newVal)
     setSavingTrip(true)
