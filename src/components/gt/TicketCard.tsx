@@ -1,161 +1,164 @@
-'use client'
-
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { addToSyncQueue } from '@/utils/offline/sync'
-import { MapPin, CheckCircle2, AlertTriangle, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { MapPin, Check, Copy, ChevronDown } from 'lucide-react'
+import { getSubIcon } from '@/components/shared/icons'
 
-export default function TicketCard({ ticket: initialTicket }: { ticket: any }) {
-  const supabase = createClient()
-  const [ticket, setTicket] = useState(initialTicket)
-  const [expanded, setExpanded] = useState(false)
-  const [remarks, setRemarks] = useState(ticket.remarks || '')
-  const [updating, setUpdating] = useState(false)
-  const [locationStatus, setLocationStatus] = useState<string>('')
+export type Log = {
+  id: string
+  ticket_id: string
+  route_name: string | null
+  vehicle_no: string | null
+  contact_name: string | null
+  location: string | null
+  sub_category: string | null
+  gt_status: string | null
+  remarks: string | null
+  gt_maps_link: string | null
+}
 
-  const getGPS = (): Promise<{ lat: number; lng: number } | null> => {
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) { resolve(null); return }
-      setLocationStatus('Capturing GPS...')
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocationStatus('')
-          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        },
-        () => {
-          setLocationStatus('GPS failed, saving without location')
-          setTimeout(() => setLocationStatus(''), 3000)
-          resolve(null)
-        },
-        { timeout: 8000 }
-      )
-    })
+export type StatusOption = { name: string; color: string }
+
+export function getStatusColor(statusName: string | null, options: StatusOption[]) {
+  if (!statusName) return { banner: 'bg-primary', badge: '' }
+  const opt = options.find(o => o.name === statusName)
+  const c = opt ? opt.color : 'primary'
+  
+  if (c === 'emerald') return { banner: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' }
+  if (c === 'blue') return { banner: 'bg-blue-500', badge: 'bg-blue-50 text-blue-700 border border-blue-200' }
+  if (c === 'rose') return { banner: 'bg-rose-500', badge: 'bg-rose-50 text-rose-700 border border-rose-200' }
+  if (c === 'amber') return { banner: 'bg-amber-500', badge: 'bg-amber-50 text-amber-700 border border-amber-200' }
+  
+  return { banner: `bg-${c}-500`, badge: `bg-${c}-50 text-${c}-700 border border-${c}-200` }
+}
+
+export function TicketCard({ log, index, statusOptions, onSave, isSaving }: { log: Log, index: number, statusOptions: StatusOption[], onSave: (s: string, r: string) => void, isSaving: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [status, setStatus] = useState(log.gt_status || '')
+  const [remarks, setRemarks] = useState(log.remarks || '')
+  const [copied, setCopied] = useState(false)
+
+  const colors = getStatusColor(log.gt_status, statusOptions)
+  const currentColors = getStatusColor(status, statusOptions)
+  const { Icon: SubIcon, color: subColor, bg: subBg } = getSubIcon(log.sub_category || '')
+
+  function handleCopy() {
+    const lines = [
+      `${log.ticket_id} - ${log.contact_name || 'No Name'}`,
+      `${log.sub_category || 'Other'} - ${log.gt_status || 'Pending'}${log.remarks ? ` - ${log.remarks}` : ''}`
+    ]
+    if (log.gt_maps_link) lines.push(log.gt_maps_link)
+    navigator.clipboard.writeText(lines.join('\n'))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
-
-  const handleStatusUpdate = async (status: 'Delivered' | 'Issue') => {
-    if (status === 'Issue' && !remarks.trim()) {
-      alert('Please enter remarks for the issue before saving.')
-      return
-    }
-
-    setUpdating(true)
-
-    const gps = await getGPS()
-
-    const payload = {
-      ticket_id: ticket.ticket_id,
-      gt_status: status,
-      gt_location_lat: gps?.lat ?? null,
-      gt_location_lng: gps?.lng ?? null,
-      remarks: remarks || null,
-    }
-
-    if (!navigator.onLine) {
-      // Queue for offline sync
-      await addToSyncQueue('UPDATE_TICKET', payload)
-      setTicket((prev: any) => ({ ...prev, gt_status: status, remarks }))
-      setUpdating(false)
-      setExpanded(false)
-      return
-    }
-
-    const { error } = await supabase
-      .from('dispatch_log')
-      .update({
-        gt_status: status,
-        gt_location_lat: gps?.lat ?? null,
-        gt_location_lng: gps?.lng ?? null,
-        remarks: remarks || null,
-        gt_updated_at: new Date().toISOString(),
-      })
-      .eq('id', ticket.id)
-
-    if (!error) {
-      setTicket((prev: any) => ({ ...prev, gt_status: status, remarks }))
-      setExpanded(false)
-    } else {
-      // Fallback to offline queue on error
-      await addToSyncQueue('UPDATE_TICKET', payload)
-      setTicket((prev: any) => ({ ...prev, gt_status: status, remarks }))
-      setExpanded(false)
-    }
-
-    setUpdating(false)
-  }
-
-  const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-    Delivered: { bg: 'bg-green-100', text: 'text-green-700', label: 'Delivered' },
-    Issue: { bg: 'bg-red-100', text: 'text-red-700', label: 'Issue' },
-    Attempted: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Attempted' },
-  }
-  const sc = statusConfig[ticket.gt_status] || { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Pending' }
 
   return (
-    <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-      ticket.gt_status === 'Delivered' ? 'border-green-200' 
-      : ticket.gt_status === 'Issue' ? 'border-red-200' 
-      : 'border-gray-200'
-    }`}>
-      {/* Summary Row */}
-      <div
-        className="p-4 flex items-start gap-3 cursor-pointer active:bg-gray-50 transition-colors"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className={`mt-0.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${sc.bg} ${sc.text} whitespace-nowrap`}>
-          {sc.label}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{ticket.contact_name || ticket.ticket_id}</p>
-          <p className="text-xs text-gray-500 truncate mt-0.5">{ticket.location || ticket.address || ticket.ticket_id}</p>
-        </div>
-        {expanded ? <ChevronUp className="text-gray-400 shrink-0" size={18} /> : <ChevronDown className="text-gray-400 shrink-0" size={18} />}
-      </div>
-
-      {/* Expanded Actions */}
-      {expanded && (
-        <div className="px-4 pb-4 border-t border-gray-100 pt-3 flex flex-col gap-3">
-          {locationStatus && (
-            <div className="flex items-center gap-2 text-xs text-blue-600 font-medium">
-              <MapPin className="w-3.5 h-3.5" />
-              {locationStatus}
-            </div>
-          )}
-
-          {/* Remarks */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-500 font-semibold uppercase tracking-wide">
-              Remarks {ticket.gt_status !== 'Delivered' && '(required for Issue)'}
-            </label>
-            <textarea
-              rows={2}
-              value={remarks}
-              onChange={e => setRemarks(e.target.value)}
-              placeholder="Add notes about this delivery..."
-              className="rounded-xl px-3 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <button
-              disabled={updating}
-              onClick={() => handleStatusUpdate('Delivered')}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-60"
-            >
-              {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Delivered
-            </button>
-            <button
-              disabled={updating}
-              onClick={() => handleStatusUpdate('Issue')}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-all active:scale-[0.98] disabled:opacity-60"
-            >
-              {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
-              Issue
-            </button>
-          </div>
+    <div className="bg-card border border-border rounded-xl shadow-[0_2px_12px_-2px_rgba(0,0,0,0.06)] transition-all relative">
+      {isSaving && (
+        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
+          <div className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin"/>
+          <span className="text-xs font-medium text-primary">Capturing Location...</span>
         </div>
       )}
+
+      {/* Top Banner (Status indicator) */}
+      <div className={`h-1.5 w-full rounded-t-xl ${colors.banner}`} />
+      
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <span className="truncate max-w-[160px]">{log.contact_name || 'No Name'}</span>
+              <span className="text-xs font-normal text-foreground/40 shrink-0">#{log.ticket_id}</span>
+            </h3>
+          </div>
+          <div className="text-right flex flex-col items-end gap-1.5">
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border ${subBg}`} title={log.sub_category || 'Other'}>
+              <SubIcon size={12} className={subColor} />
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${subColor}`}>
+                {log.sub_category || 'Other'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-1.5 text-xs text-foreground/60 mb-4 bg-muted/30 p-2 rounded-lg border border-border/50">
+          <MapPin size={14} className="mt-0.5 shrink-0 text-foreground/40"/>
+          <span className="leading-snug">{log.location || 'No location provided'}</span>
+        </div>
+
+        {/* Action Form */}
+        <div className="bg-foreground/[0.02] border border-border rounded-lg p-3 space-y-3">
+          <div className="relative">
+             <label className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1 block">Update Status</label>
+             <button 
+               onClick={() => setOpen(!open)}
+               className={`w-full border rounded-md px-2.5 py-2 text-xs shadow-sm flex items-center justify-between font-medium text-left transition-colors ${
+                 status ? currentColors.badge : 'bg-background border-input text-foreground/40 hover:bg-muted'
+               }`}
+             >
+               <span>
+                 {status || '— Select Status —'}
+               </span>
+               <ChevronDown size={14} className={status ? '' : 'text-foreground/40'}/>
+             </button>
+
+             {open && (
+               <div className="absolute top-full left-0 mt-1 z-[100] w-full bg-card border border-border rounded-lg shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                 <div className="p-1">
+                   {statusOptions.map(opt => (
+                     <div 
+                       key={opt.name}
+                       onClick={() => { setStatus(opt.name); setOpen(false) }}
+                       className={`px-2.5 py-2 text-xs rounded-md cursor-pointer flex items-center justify-between ${status === opt.name ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted font-medium'}`}
+                     >
+                       <span>{opt.name}</span>
+                       <div className={`w-2 h-2 rounded-full ${
+                         opt.color === 'emerald' ? 'bg-emerald-500' : 
+                         opt.color === 'blue' ? 'bg-blue-500' : 
+                         opt.color === 'rose' ? 'bg-rose-500' : 
+                         opt.color === 'amber' ? 'bg-amber-500' : 'bg-primary'
+                       }`} />
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             )}
+          </div>
+
+          <div>
+             <label className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1 block">Remarks</label>
+             <div className="relative">
+               <input 
+                 type="text" 
+                 value={remarks}
+                 onChange={e => setRemarks(e.target.value)}
+                 placeholder="Enter remarks..."
+                 className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
+               />
+             </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button 
+              onClick={() => onSave(status, remarks)}
+              disabled={!status || (status === log.gt_status && remarks === log.remarks)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              <Check size={14}/>
+              Submit
+            </button>
+            <button
+              onClick={handleCopy}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold border transition-all ${
+                copied ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-background border-border text-foreground hover:bg-muted'
+              }`}
+            >
+              {copied ? <Check size={14}/> : <Copy size={14}/>}
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

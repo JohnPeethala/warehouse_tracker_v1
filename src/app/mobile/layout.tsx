@@ -1,14 +1,13 @@
-export default function MobileLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function MobileLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
   return (
-    <div className="bg-white min-h-screen text-gray-900 w-full max-w-md mx-auto shadow-sm relative overflow-x-hidden pb-safe">
-      {/* 
-        This wrapper enforces a mobile-first, strict Light Theme. 
-        It centers the content on larger screens to simulate a mobile view.
-      */}
+    <div className="min-h-screen bg-background">
       {children}
     </div>
   )

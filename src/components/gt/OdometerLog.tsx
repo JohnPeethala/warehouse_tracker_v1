@@ -1,138 +1,95 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { Gauge, Loader2, CheckCircle2 } from 'lucide-react'
 
-interface OdometerLogProps {
-  profileId: string
-  tripDate: string
+export type Trip = {
+  id: string
+  vehicle_no: string | null
+  odometer_start: number | null
+  odometer_end: number | null
 }
 
-export default function OdometerLog({ profileId, tripDate }: OdometerLogProps) {
-  const supabase = createClient()
+type Props = {
+  profileId: string
+  today: string
+  assignedVehicle: string
+  assignedDriver: string
+  trip: Trip | null
+}
 
-  const [trip, setTrip] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [odomStart, setOdomStart] = useState('')
-  const [odomEnd, setOdomEnd] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver, trip }: Props) {
+  // Trip state
+  const [tripState, setTripState] = useState<Partial<Trip>>(trip || { 
+    vehicle_no: assignedVehicle 
+  })
+  const [savingTrip, setSavingTrip] = useState(false)
 
-  useEffect(() => {
-    const fetchTrip = async () => {
-      const { data } = await supabase
-        .from('gt_trips')
-        .select('*')
-        .eq('profile_id', profileId)
-        .eq('trip_date', tripDate)
-        .maybeSingle()
-
-      if (data) {
-        setTrip(data)
-        setOdomStart(data.odometer_start?.toString() || '')
-        setOdomEnd(data.odometer_end?.toString() || '')
-      }
-      setLoading(false)
-    }
-    fetchTrip()
-  }, [profileId, tripDate])
-
-  const handleSave = async () => {
-    setSaving(true)
-    setSaved(false)
+  async function saveTrip(field: keyof Trip, value: any) {
+    const newVal = { ...tripState, [field]: value }
+    setTripState(newVal)
+    setSavingTrip(true)
 
     const payload = {
       profile_id: profileId,
-      trip_date: tripDate,
-      odometer_start: odomStart ? parseFloat(odomStart) : null,
-      odometer_end: odomEnd ? parseFloat(odomEnd) : null,
+      trip_date: today,
+      vehicle_no: newVal.vehicle_no || null,
+      odometer_start: newVal.odometer_start || null,
+      odometer_end: newVal.odometer_end || null,
+      updated_at: new Date().toISOString()
     }
 
-    let error
-    if (trip) {
-      const res = await supabase.from('gt_trips').update(payload).eq('id', trip.id)
-      error = res.error
-    } else {
-      const res = await supabase.from('gt_trips').insert(payload).select().single()
-      error = res.error
-      if (!error && res.data) setTrip(res.data)
-    }
-
-    setSaving(false)
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
-    } else {
-      alert('Failed to save odometer. Please try again.')
-    }
+    await createClient().from('gt_trips').upsert(payload, { onConflict: 'profile_id,trip_date' })
+    setSavingTrip(false)
   }
 
-  const distance = odomEnd && odomStart
-    ? (parseFloat(odomEnd) - parseFloat(odomStart)).toFixed(1)
-    : null
-
-  if (loading) return null
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
-          <Gauge className="w-4 h-4 text-blue-600" />
+    <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+          Daily Odometer
+        </h2>
+        {savingTrip && <span className="text-[10px] text-primary animate-pulse">Saving...</span>}
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Vehicle No.</p>
+          <div className="w-full bg-muted/50 border border-border/50 rounded-md px-2.5 py-2 text-xs font-semibold text-foreground/80 cursor-not-allowed">
+            {assignedVehicle || '—'}
+          </div>
         </div>
         <div>
-          <h3 className="font-bold text-gray-900">Odometer Log</h3>
-          <p className="text-xs text-gray-500">Record your trip readings</p>
+          <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Driver Name</p>
+          <div className="w-full bg-muted/50 border border-border/50 rounded-md px-2.5 py-2 text-xs font-semibold text-foreground/80 cursor-not-allowed">
+            {assignedDriver || '—'}
+          </div>
         </div>
-        {distance && (
-          <span className="ml-auto bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-lg">
-            {distance} km
-          </span>
-        )}
       </div>
-
-      <div className="flex gap-3">
-        <div className="flex-1 flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Start (km)</label>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={odomStart}
-            onChange={e => setOdomStart(e.target.value)}
-            placeholder="e.g. 12400"
-            className="rounded-xl px-3 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Start (km)</p>
+          <input 
+            type="number" 
+            value={tripState.odometer_start || ''} 
+            onChange={e => setTripState(s => ({ ...s, odometer_start: parseFloat(e.target.value) || null }))}
+            onBlur={e => saveTrip('odometer_start', parseFloat(e.target.value) || null)}
+            placeholder="e.g. 45000"
+            className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
           />
         </div>
-        <div className="flex-1 flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-semibold uppercase tracking-wide">End (km)</label>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={odomEnd}
-            onChange={e => setOdomEnd(e.target.value)}
-            placeholder="e.g. 12560"
-            className="rounded-xl px-3 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        <div>
+          <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">End (km)</p>
+          <input 
+            type="number" 
+            value={tripState.odometer_end || ''} 
+            onChange={e => setTripState(s => ({ ...s, odometer_end: parseFloat(e.target.value) || null }))}
+            onBlur={e => saveTrip('odometer_end', parseFloat(e.target.value) || null)}
+            placeholder="e.g. 45120"
+            className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
           />
         </div>
       </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving || !odomStart}
-        className={`mt-3 flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all ${
-          saved
-            ? 'bg-green-500 text-white'
-            : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400'
-        }`}
-      >
-        {saving ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-        ) : saved ? (
-          <><CheckCircle2 className="w-4 h-4" /> Saved!</>
-        ) : (
-          'Save Reading'
-        )}
-      </button>
     </div>
   )
 }

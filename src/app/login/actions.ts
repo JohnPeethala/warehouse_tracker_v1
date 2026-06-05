@@ -10,16 +10,16 @@ export async function login(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (error) {
-    redirect('/login?message=Could not authenticate user')
+  if (!email || !password) {
+    redirect('/login?message=Email and password are required')
   }
 
-  // Revalidate layout and redirect to root to let middleware handle routing
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (error) {
+    redirect(`/login?message=${encodeURIComponent(error.message)}`)
+  }
+
   revalidatePath('/', 'layout')
   redirect('/')
 }

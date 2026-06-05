@@ -2,9 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,10 +13,8 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -27,53 +23,55 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Role based routing logic
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  const isTvDashboard = request.nextUrl.pathname.startsWith('/tv')
-  
+  const isLoginPage = request.nextUrl.pathname === '/login'
+
+  // Unauthenticated → login
   if (!user && !isLoginPage) {
-    // no user, redirect to login
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user) {
-    // If user is logged in, fetch their role
+  // Authenticated on login or root → route by role
+  if (user && (isLoginPage || request.nextUrl.pathname === '/')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
-      
-    const role = profile?.role || 'ground'
 
-    if (isLoginPage || request.nextUrl.pathname === '/') {
-      // Redirect based on role
-      const url = request.nextUrl.clone()
-      if (role === 'ground') {
-        url.pathname = '/mobile/gt'
-      } else {
-        url.pathname = '/mobile/dispatcher'
-      }
-      return NextResponse.redirect(url)
-    }
+    const role = profile?.role ?? 'ground'
+    const url = request.nextUrl.clone()
+    url.pathname = role === 'ground' ? '/mobile/gt' : '/mobile/supervisor'
+    return NextResponse.redirect(url)
+  }
 
-    // Prevent ground team from accessing dispatcher route
-    if (role === 'ground' && request.nextUrl.pathname.startsWith('/mobile/dispatcher')) {
+  // Role-guard: ground cannot access supervisor view
+  if (user && request.nextUrl.pathname.startsWith('/mobile/supervisor')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role === 'ground') {
       const url = request.nextUrl.clone()
       url.pathname = '/mobile/gt'
       return NextResponse.redirect(url)
     }
-    
-    // Prevent dispatcher/admin from accessing ground route
-    if (role !== 'ground' && request.nextUrl.pathname.startsWith('/mobile/gt')) {
+  }
+
+  // Role-guard: supervisor/admin cannot access GT view
+  if (user && request.nextUrl.pathname.startsWith('/mobile/gt')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role !== 'ground') {
       const url = request.nextUrl.clone()
-      url.pathname = '/mobile/dispatcher'
+      url.pathname = '/mobile/supervisor'
       return NextResponse.redirect(url)
     }
   }
