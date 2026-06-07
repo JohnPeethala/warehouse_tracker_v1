@@ -81,24 +81,23 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
       if (l.gt_status === 'Done') subcats[cat].done += 1
     })
 
-    function getEmoji(status: string | null) {
+    function getStatusMark(status: string | null) {
       const s = (status || '').toLowerCase()
-      if (s.includes('done')) return '✅'
-      if (s.includes('cancel')) return '🚫'
-      if (s.includes('reschedule')) return '🔄'
-      if (s.includes('not responding')) return '📵'
-      if (s.includes('issue')) return '⚠️'
-      if (s.includes('other')) return '📌'
-      return '🕐'
+      if (s.includes('done')) return '✓'
+      if (s.includes('cancel')) return '✗'
+      if (s.includes('reschedule')) return '↺'
+      if (s.includes('not responding')) return '–'
+      if (s.includes('issue')) return '!'
+      return '○'
     }
 
     const lines: string[] = []
 
     lines.push(`*EOD — ${dateStr}*`)
-    lines.push(`👤 ${userName.trim()}`)
-    lines.push(`🚗 ${assignedDriver || 'N/A'}   ${assignedVehicle || 'N/A'}`)
+    lines.push(`${userName.trim()}`)
+    lines.push(`${assignedDriver || 'N/A'}   ${assignedVehicle || 'N/A'}`)
     lines.push('')
-    lines.push(`Done *${doneCount}/${total}*   Remaining *${notDoneCount}*`)
+    lines.push(`Done: *${doneCount}/${total}*   Remaining: *${notDoneCount}*`)
     lines.push('')
 
     const catKeys = Object.keys(subcats).sort()
@@ -111,10 +110,10 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
 
     localLogs.forEach(log => {
       const status = log.gt_status || 'Pending'
-      const emoji = getEmoji(status)
-      lines.push(`${emoji}  #${log.ticket_id}  ${log.contact_name || 'No Name'}`)
+      const mark = getStatusMark(status)
+      lines.push(`${mark}  #${log.ticket_id}  ${log.contact_name || 'No Name'}  — ${status}`)
       if (log.remarks) {
-        lines.push(`       ${log.remarks}`)
+        lines.push(`     ${log.remarks}`)
       }
     })
 
