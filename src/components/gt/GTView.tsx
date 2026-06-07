@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
+import { LogOut, Copy, Check } from 'lucide-react'
 import { updateTicketStatus as dbUpdateTicketStatus } from '@/services/database'
 import { CalendarPicker } from '@/components/shared/CalendarPicker'
 import { OdometerLog, Trip } from '@/components/gt/OdometerLog'
@@ -28,6 +28,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   // Logs state (local overrides for optimistic UI)
   const [localLogs, setLocalLogs] = useState<Log[]>(logs)
   const [savingLog, setSavingLog] = useState<string | null>(null)
+  const [copiedSummary, setCopiedSummary] = useState(false)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -68,6 +69,53 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
     setSavingLog(null)
   }
 
+  function handleCopyEOD() {
+    const total = localLogs.length;
+    const doneCount = localLogs.filter(l => l.gt_status === 'Done').length;
+
+    const subcats: Record<string, { done: number, total: number }> = {};
+    localLogs.forEach(l => {
+      const cat = l.sub_category || 'Other';
+      if (!subcats[cat]) subcats[cat] = { done: 0, total: 0 };
+      subcats[cat].total += 1;
+      if (l.gt_status === 'Done') subcats[cat].done += 1;
+    });
+
+    let text = `*EOD Report* 📋\n\n`;
+    text += `*GT:* ${userName.trim()}\n`;
+    text += `*Vehicle:* ${assignedVehicle || 'N/A'} | *Driver:* ${assignedDriver || 'N/A'}\n`;
+    text += `*Progress:* ${doneCount}/${total} Done\n\n`;
+
+    Object.keys(subcats).sort().forEach(cat => {
+      const stats = subcats[cat];
+      text += `• ${cat}: ${stats.done}/${stats.total}\n`;
+    });
+    text += `\n*Tickets:*\n`;
+
+    localLogs.forEach((log) => {
+      let statusEmoji = '⏳';
+      const status = log.gt_status || 'Pending';
+      const sLower = status.toLowerCase();
+      if (sLower.includes('done')) statusEmoji = '✅';
+      else if (sLower.includes('cancel')) statusEmoji = '❌';
+      else if (sLower.includes('reschedule')) statusEmoji = '🔄';
+      else if (sLower.includes('not responding')) statusEmoji = '📵';
+      else if (sLower.includes('issue')) statusEmoji = '⚠️';
+      else if (sLower.includes('other')) statusEmoji = 'ℹ️';
+
+      text += `*#${log.ticket_id}* - ${log.contact_name || 'No Name'}\n`;
+      text += `🔹 Status: ${statusEmoji} ${status}\n`;
+      if (log.remarks) {
+        text += `📝 Remarks: ${log.remarks}\n`;
+      }
+      text += `\n`;
+    });
+
+    navigator.clipboard.writeText(text.trim());
+    setCopiedSummary(true);
+    setTimeout(() => setCopiedSummary(false), 2000);
+  }
+
   return (
     <div className="flex flex-col h-dvh bg-background">
       {/* ── Header ── */}
@@ -105,7 +153,20 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
 
         {/* ── Assigned Tickets ── */}
         <div>
-          <h2 className="text-base font-bold text-foreground mb-4 px-1">Assigned Tickets ({localLogs.length})</h2>
+          <div className="flex items-center justify-between mb-4 px-1">
+            <h2 className="text-base font-bold text-foreground">Assigned Tickets ({localLogs.length})</h2>
+            {localLogs.length > 0 && (
+              <button 
+                onClick={handleCopyEOD}
+                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${
+                  copiedSummary ? 'bg-emerald-100 text-emerald-700' : 'bg-primary/10 text-primary hover:bg-primary/20'
+                }`}
+              >
+                {copiedSummary ? <Check size={14} /> : <Copy size={14} />}
+                {copiedSummary ? 'Copied!' : 'Copy EOD'}
+              </button>
+            )}
+          </div>
           
           {localLogs.length === 0 ? (
             <div className="bg-card border border-border border-dashed rounded-xl p-8 text-center">
