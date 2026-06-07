@@ -53,9 +53,9 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-              <span className="truncate max-w-[160px]">{log.contact_name || 'No Name'}</span>
-              <span className="text-xs font-normal text-foreground/40 shrink-0">#{log.ticket_id}</span>
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <span className="truncate max-w-[180px]">{log.contact_name || 'No Name'}</span>
+              <span className="text-sm font-normal text-foreground/40 shrink-0">#{log.ticket_id}</span>
             </h3>
           </div>
           <div className="text-right flex flex-col items-end gap-1.5">
@@ -66,7 +66,7 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
             >
               <SubIcon size={12} className={subColor} style={hexColor ? { color: hexColor } : {}} />
               <span 
-                className={`text-[10px] font-bold uppercase tracking-wider ${subColor}`}
+                className={`text-xs font-bold uppercase tracking-wider ${subColor}`}
                 style={hexColor ? { color: hexColor } : {}}
               >
                 {log.sub_category || 'Other'}
@@ -75,7 +75,7 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
           </div>
         </div>
 
-        <div className="flex items-start gap-1.5 text-xs text-foreground/60 mb-4 bg-muted/30 p-2 rounded-lg border border-border/50">
+        <div className="flex items-start gap-1.5 text-sm text-foreground/60 mb-4 bg-muted/30 p-2.5 rounded-lg border border-border/50">
           <MapPin size={14} className="mt-0.5 shrink-0 text-foreground/40"/>
           <span className="leading-snug">{log.location || 'No location provided'}</span>
         </div>
@@ -83,10 +83,10 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
         {/* Action Form */}
         <div className="bg-foreground/[0.02] border border-border rounded-lg p-3 space-y-3">
           <div className="relative">
-             <label className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1 block">Update Status</label>
+             <label className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1.5 block">Update Status</label>
              <button 
                onClick={() => setOpen(!open)}
-               className={`w-full border rounded-md px-2.5 py-2 text-xs shadow-sm flex items-center justify-between font-medium text-left transition-colors ${
+               className={`w-full border rounded-md px-3 py-2.5 text-sm shadow-sm flex items-center justify-between font-medium text-left transition-colors ${
                  status ? currentColors.badge : 'bg-background border-input text-foreground/40 hover:bg-muted'
                }`}
              >
@@ -103,7 +103,7 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
                      <div 
                        key={opt.name}
                        onClick={() => { setStatus(opt.name); setOpen(false) }}
-                       className={`px-2.5 py-2 text-xs rounded-md cursor-pointer flex items-center justify-between ${status === opt.name ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted font-medium'}`}
+                       className={`px-3 py-2.5 text-sm rounded-md cursor-pointer flex items-center justify-between ${status === opt.name ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted font-medium'}`}
                      >
                        <span>{opt.name}</span>
                        <div className={`w-2 h-2 rounded-full ${
@@ -120,14 +120,14 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
           </div>
 
           <div>
-             <label className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1 block">Remarks</label>
+             <label className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1.5 block">Remarks</label>
              <div className="relative">
                <input 
                  type="text" 
                  value={remarks}
                  onChange={e => setRemarks(e.target.value)}
                  placeholder="Enter remarks..."
-                 className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
+                 className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-3 py-2.5 text-sm shadow-sm transition-all"
                />
              </div>
           </div>
@@ -136,14 +136,14 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
             <button 
               onClick={() => onSave(status, remarks)}
               disabled={!status || (status === log.gt_status && remarks === log.remarks)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
             >
               <Check size={14}/>
               Submit
             </button>
             <button
               onClick={handleCopy}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold border transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold border transition-all ${
                 copied ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-background border-border text-foreground hover:bg-muted'
               }`}
             >

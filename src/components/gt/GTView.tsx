@@ -78,8 +78,8 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
               <img src="/logo.svg" alt="Warehouse Tracker Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <span className="block text-base font-bold text-foreground leading-none">Warehouse OPs</span>
-              <span className="block text-xs text-foreground/50 mt-1 font-medium">{userName.split(' ')[0]}</span>
+              <span className="block text-lg font-bold text-foreground leading-none">Warehouse OPs</span>
+              <span className="block text-sm text-foreground/50 mt-1.5 font-medium">{userName.split(' ')[0]}</span>
             </div>
           </div>
           <button onClick={handleSignOut} className="p-2 rounded-full hover:bg-muted text-foreground/50 transition-colors">
@@ -90,7 +90,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
           <CalendarPicker value={today} onChange={d => {
             startTransition(() => { router.push(`?date=${d}`) })
           }} />
-          <div className="text-xs font-semibold text-foreground/40">{localLogs.length} Assigned</div>
+          <div className="text-sm font-semibold text-foreground/40">{localLogs.length} Assigned</div>
         </div>
       </header>
 
@@ -105,11 +105,11 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
 
         {/* ── Assigned Tickets ── */}
         <div>
-          <h2 className="text-sm font-bold text-foreground mb-3 px-1">Assigned Tickets ({localLogs.length})</h2>
+          <h2 className="text-base font-bold text-foreground mb-4 px-1">Assigned Tickets ({localLogs.length})</h2>
           
           {localLogs.length === 0 ? (
             <div className="bg-card border border-border border-dashed rounded-xl p-8 text-center">
-              <p className="text-sm font-medium text-foreground/40">No tickets assigned today</p>
+              <p className="text-base font-medium text-foreground/40">No tickets assigned today</p>
             </div>
           ) : (
             <div className="space-y-4">

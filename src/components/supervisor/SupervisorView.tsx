@@ -85,7 +85,7 @@ function CustomSelect({ value, options, onChange, placeholder }: {
       <button 
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full bg-background border border-input outline-none rounded-md px-2 py-1.5 text-xs shadow-sm transition-all flex items-center justify-between hover:bg-muted/30 focus:border-primary focus:ring-1 focus:ring-primary text-left"
+        className="w-full bg-background border border-input outline-none rounded-md px-3 py-2 text-sm shadow-sm transition-all flex items-center justify-between hover:bg-muted/30 focus:border-primary focus:ring-1 focus:ring-primary text-left"
       >
         <span className={`truncate ${!value ? 'text-foreground/40' : 'text-foreground font-medium'}`}>
           {value ? selectedLabel : placeholder}
@@ -108,7 +108,7 @@ function CustomSelect({ value, options, onChange, placeholder }: {
               <div 
                 key={o.value} 
                 onClick={() => { onChange(o.value); setOpen(false) }}
-                className={`px-2.5 py-2 text-xs rounded-md cursor-pointer transition-colors ${value === o.value ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted font-medium'}`}
+                className={`px-3 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${value === o.value ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted font-medium'}`}
               >
                 {o.label}
               </div>
@@ -145,10 +145,10 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
       {/* ── TOP: Route title + ticket count + icons ── */}
       <div className="px-4 pt-4 pb-3 border-b border-border rounded-t-2xl bg-card z-10">
         {/* Title */}
-        <h2 className="text-lg font-bold text-foreground tracking-tight">
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
           Route {route.route_name}
         </h2>
-        <p className="text-sm text-foreground/50 mt-0.5 font-medium">{route.logs.length} tickets</p>
+        <p className="text-base text-foreground/50 mt-0.5 font-medium">{route.logs.length} tickets</p>
 
         {/* Sub-category icon chips with v3 colors */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -182,14 +182,14 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
               const { Icon, color, hexColor } = getSubIcon(log.sub_category ?? '', subCategories)
               return (
                 <tr key={log.id} className="border-b border-border last:border-0 hover:bg-foreground/5 transition-colors">
-                  <td className="px-4 py-2.5 font-mono text-xs font-medium text-foreground/60 whitespace-nowrap">
+                  <td className="px-4 py-2.5 font-mono text-sm font-medium text-foreground/60 whitespace-nowrap">
                     {log.ticket_id}
                   </td>
-                  <td className="px-2 py-2.5">
-                    <p className="font-medium text-foreground">{log.contact_name ?? '—'}</p>
+                  <td className="px-2 py-3">
+                    <p className="font-medium text-foreground text-base">{log.contact_name ?? '—'}</p>
                     {log.location && (
-                      <p className="flex items-center gap-0.5 text-foreground/40 mt-0.5 truncate">
-                        <MapPin className="w-2.5 h-2.5 shrink-0"/>{log.location}
+                      <p className="flex items-center gap-1 text-foreground/40 mt-1 truncate text-xs">
+                        <MapPin className="w-3 h-3 shrink-0"/>{log.location}
                       </p>
                     )}
                   </td>
@@ -197,7 +197,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
                     <div className="flex items-center justify-end gap-1" title={log.sub_category ?? ''}>
                       <Icon size={13} className={color} style={hexColor ? { color: hexColor } : {}} />
                       {log.ticket_status && (
-                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
                           {log.ticket_status === 'Delivered' ? '✓' : log.ticket_status === 'Issue' ? '!' : log.ticket_status}
                         </span>
                       )}
@@ -217,19 +217,19 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
           <div className="grid grid-cols-2 gap-2">
             {/* Serial select */}
             <div>
-              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Serial No.</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Serial No.</p>
               <input
                 type="number"
                 value={route.vehicle_serial || ''}
                 onChange={e => onUpdate(route.route_name, 'vehicle_serial', parseInt(e.target.value) || null)}
                 placeholder="1, 2..."
-                className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2 py-2 text-sm shadow-sm transition-all placeholder:text-foreground/30"
+                className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-3 py-2 text-sm shadow-sm transition-all placeholder:text-foreground/30"
               />
             </div>
             
             {/* GT select */}
             <div className="relative">
-              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Ground Team</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team</p>
               <CustomSelect
                 value={route.gt}
                 onChange={v => onUpdate(route.route_name, 'gt', v)}
@@ -246,7 +246,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
           <div className="grid grid-cols-2 gap-2">
             {/* Vehicle select */}
             <div className="relative">
-              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Vehicle No.</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Vehicle No.</p>
               <CustomSelect
                 value={route.vehicle_no}
                 onChange={v => {
@@ -261,7 +261,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
 
             {/* Driver Name */}
             <div className="relative">
-              <p className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1">Driver Name</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Driver Name</p>
               <CustomSelect
                 value={route.driver_name || ''}
                 onChange={v => {
@@ -277,11 +277,11 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col gap-2 mt-3">
+        <div className="flex flex-col gap-2.5 mt-4">
           <button
             onClick={() => onSave(route.route_name)}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-base font-bold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
           >
             {saving ? (
                <><div className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse"/>Saving...</>
@@ -293,7 +293,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
               navigator.clipboard.writeText(buildRouteMsg(route, selectedDate))
               setCopied(true); setTimeout(() => setCopied(false), 2000)
             }}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border transition-all
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg text-base font-bold border transition-all
               ${copied
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 : 'bg-background border-border text-foreground/70 hover:bg-muted/50 hover:border-foreground/20'
@@ -362,8 +362,8 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
               <img src="/logo.svg" alt="Warehouse Tracker Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <span className="block text-base font-bold text-foreground leading-none">Warehouse OPs</span>
-              <span className="block text-xs text-foreground/50 mt-1 font-medium">{userName.split(' ')[0]}</span>
+              <span className="block text-lg font-bold text-foreground leading-none">Warehouse OPs</span>
+              <span className="block text-sm text-foreground/50 mt-1.5 font-medium">{userName.split(' ')[0]}</span>
             </div>
           </div>
           <button onClick={handleSignOut} className="p-2 rounded-md text-red-600 hover:bg-red-50 transition-colors" title="Sign out">
@@ -373,7 +373,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
         {/* Row 2: Date Picker + Count */}
         <div className="flex items-center justify-between">
           <CalendarPicker value={selectedDate} onChange={handleDateChange} />
-          <span className="text-xs font-medium text-foreground/50 bg-foreground/[0.06] border border-foreground/10 px-2.5 py-1 rounded-full tabular-nums">
+          <span className="text-sm font-semibold text-foreground/50 bg-foreground/[0.06] border border-foreground/10 px-3 py-1 rounded-full tabular-nums">
             {routes.length} {routes.length === 1 ? 'route' : 'routes'}
           </span>
         </div>
