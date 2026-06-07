@@ -25,7 +25,6 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   const router = useRouter()
   const [, startTransition] = useTransition()
 
-  // Logs state (local overrides for optimistic UI)
   const [localLogs, setLocalLogs] = useState<Log[]>(logs)
   const [savingLog, setSavingLog] = useState<string | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
@@ -36,7 +35,6 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   }, [logs])
 
   async function handleSignOut() {
-    // Removed createClient to rely on a server action or simpler fetch in future, but for now we need the client to logout
     const { createClient } = await import('@/utils/supabase/client')
     await createClient().auth.signOut()
     router.replace('/login')
@@ -45,7 +43,6 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   async function updateTicketStatus(logId: string, newStatus: string, remarks: string) {
     setSavingLog(logId)
     
-    // Capture GPS if available
     let gpsLink = null
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -64,57 +61,66 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
     }
 
     await dbUpdateTicketStatus(logId, payload)
-
     setLocalLogs(prev => prev.map(l => l.id === logId ? { ...l, gt_status: newStatus, remarks, gt_maps_link: gpsLink } : l))
     setSavingLog(null)
   }
 
   function handleCopyEOD() {
-    const total = localLogs.length;
-    const doneCount = localLogs.filter(l => l.gt_status === 'Done').length;
-    const notDoneCount = total - doneCount;
+    const total = localLogs.length
+    const doneCount = localLogs.filter(l => l.gt_status === 'Done').length
+    const notDoneCount = total - doneCount
 
-    const subcats: Record<string, { done: number, total: number }> = {};
+    const d = new Date(today + 'T00:00:00')
+    const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+    const subcats: Record<string, { done: number; total: number }> = {}
     localLogs.forEach(l => {
-      const cat = l.sub_category || 'Other';
-      if (!subcats[cat]) subcats[cat] = { done: 0, total: 0 };
-      subcats[cat].total += 1;
-      if (l.gt_status === 'Done') subcats[cat].done += 1;
-    });
+      const cat = l.sub_category || 'Other'
+      if (!subcats[cat]) subcats[cat] = { done: 0, total: 0 }
+      subcats[cat].total += 1
+      if (l.gt_status === 'Done') subcats[cat].done += 1
+    })
 
     function getEmoji(status: string | null) {
-      const s = (status || '').toLowerCase();
-      if (s.includes('done')) return '✅';
-      if (s.includes('cancel')) return '❌';
-      if (s.includes('reschedule')) return '🔄';
-      if (s.includes('not responding')) return '📵';
-      if (s.includes('issue')) return '⚠️';
-      if (s.includes('other')) return 'ℹ️';
-      return '⏳';
+      const s = (status || '').toLowerCase()
+      if (s.includes('done')) return '✅'
+      if (s.includes('cancel')) return '🚫'
+      if (s.includes('reschedule')) return '🔄'
+      if (s.includes('not responding')) return '📵'
+      if (s.includes('issue')) return '⚠️'
+      if (s.includes('other')) return '📌'
+      return '🕐'
     }
 
-    let text = `*EOD Report* 📋\n\n`;
-    text += `*GT:* ${userName.trim()}\n`;
-    text += `*Vehicle:* ${assignedVehicle || 'N/A'} | *Driver:* ${assignedDriver || 'N/A'}\n`;
-    text += `✅ *Done:* ${doneCount}/${total}   ⏳ *Pending:* ${notDoneCount}/${total}\n\n`;
-    text += `*Breakdown:*\n`;
+    const lines: string[] = []
 
-    Object.keys(subcats).sort().forEach(cat => {
-      const { done, total: t } = subcats[cat];
-      text += `• ${cat}: ${done}/${t}\n`;
-    });
-    text += `\n*Tickets:*\n`;
+    lines.push(`*EOD — ${dateStr}*`)
+    lines.push(`👤 ${userName.trim()}`)
+    lines.push(`🚗 ${assignedDriver || 'N/A'}   ${assignedVehicle || 'N/A'}`)
+    lines.push('')
+    lines.push(`Done *${doneCount}/${total}*   Remaining *${notDoneCount}*`)
+    lines.push('')
 
-    localLogs.forEach((log) => {
-      const status = log.gt_status || 'Pending';
-      const emoji = getEmoji(status);
-      const remarks = log.remarks ? ` — ${log.remarks}` : '';
-      text += `${emoji} *#${log.ticket_id}* | ${log.contact_name || 'No Name'} | ${status}${remarks}\n`;
-    });
+    const catKeys = Object.keys(subcats).sort()
+    catKeys.forEach(cat => {
+      const { done, total: t } = subcats[cat]
+      lines.push(`  ${cat}  ${done}/${t}`)
+    })
+    lines.push('')
+    lines.push('─────────────────')
 
-    navigator.clipboard.writeText(text.trim());
-    setCopiedSummary(true);
-    setTimeout(() => setCopiedSummary(false), 2000);
+    localLogs.forEach(log => {
+      const status = log.gt_status || 'Pending'
+      const emoji = getEmoji(status)
+      lines.push(`${emoji}  #${log.ticket_id}  ${log.contact_name || 'No Name'}`)
+      if (log.remarks) {
+        lines.push(`       ${log.remarks}`)
+      }
+    })
+
+    navigator.clipboard.writeText(lines.join('\n').trim())
+    setCopiedSummary(true)
+    setTimeout(() => setCopiedSummary(false), 2000)
   }
 
   return (
