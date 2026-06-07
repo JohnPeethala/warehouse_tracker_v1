@@ -72,6 +72,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   function handleCopyEOD() {
     const total = localLogs.length;
     const doneCount = localLogs.filter(l => l.gt_status === 'Done').length;
+    const notDoneCount = total - doneCount;
 
     const subcats: Record<string, { done: number, total: number }> = {};
     localLogs.forEach(l => {
@@ -81,34 +82,34 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
       if (l.gt_status === 'Done') subcats[cat].done += 1;
     });
 
+    function getEmoji(status: string | null) {
+      const s = (status || '').toLowerCase();
+      if (s.includes('done')) return '✅';
+      if (s.includes('cancel')) return '❌';
+      if (s.includes('reschedule')) return '🔄';
+      if (s.includes('not responding')) return '📵';
+      if (s.includes('issue')) return '⚠️';
+      if (s.includes('other')) return 'ℹ️';
+      return '⏳';
+    }
+
     let text = `*EOD Report* 📋\n\n`;
     text += `*GT:* ${userName.trim()}\n`;
     text += `*Vehicle:* ${assignedVehicle || 'N/A'} | *Driver:* ${assignedDriver || 'N/A'}\n`;
-    text += `*Progress:* ${doneCount}/${total} Done\n\n`;
+    text += `✅ *Done:* ${doneCount}/${total}   ⏳ *Pending:* ${notDoneCount}/${total}\n\n`;
+    text += `*Breakdown:*\n`;
 
     Object.keys(subcats).sort().forEach(cat => {
-      const stats = subcats[cat];
-      text += `• ${cat}: ${stats.done}/${stats.total}\n`;
+      const { done, total: t } = subcats[cat];
+      text += `• ${cat}: ${done}/${t}\n`;
     });
     text += `\n*Tickets:*\n`;
 
     localLogs.forEach((log) => {
-      let statusEmoji = '⏳';
       const status = log.gt_status || 'Pending';
-      const sLower = status.toLowerCase();
-      if (sLower.includes('done')) statusEmoji = '✅';
-      else if (sLower.includes('cancel')) statusEmoji = '❌';
-      else if (sLower.includes('reschedule')) statusEmoji = '🔄';
-      else if (sLower.includes('not responding')) statusEmoji = '📵';
-      else if (sLower.includes('issue')) statusEmoji = '⚠️';
-      else if (sLower.includes('other')) statusEmoji = 'ℹ️';
-
-      text += `*#${log.ticket_id}* - ${log.contact_name || 'No Name'}\n`;
-      text += `🔹 Status: ${statusEmoji} ${status}\n`;
-      if (log.remarks) {
-        text += `📝 Remarks: ${log.remarks}\n`;
-      }
-      text += `\n`;
+      const emoji = getEmoji(status);
+      const remarks = log.remarks ? ` — ${log.remarks}` : '';
+      text += `${emoji} *#${log.ticket_id}* | ${log.contact_name || 'No Name'} | ${status}${remarks}\n`;
     });
 
     navigator.clipboard.writeText(text.trim());
