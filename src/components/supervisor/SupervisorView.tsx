@@ -141,7 +141,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
   const hasAssignment = route.vehicle_no || route.driver_name || route.gt
 
   return (
-    <div className="bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col snap-start snap-always scroll-mt-4 h-full overflow-hidden">
+    <div className="h-full bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col snap-start snap-always scroll-mt-4">
       {/* ── TOP: Route title + ticket count + icons ── */}
       <div className="px-4 pt-4 pb-3 border-b border-border rounded-t-2xl bg-card z-10">
         {/* Title */}
