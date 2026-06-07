@@ -54,13 +54,8 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
   
   const { data: logs } = await query.order('vehicle_serial', { ascending: true })
 
-  // DEBUG: Fetch all logs for today to see what GTs are actually assigned
-  const { data: allLogs } = await supabase.from('dispatch_log').select('gt').eq('scheduled_date', today)
-  console.log('GT View Debug:', { 
-    expectedGtName: gtName, 
-    assignedGtsInDb: Array.from(new Set(allLogs?.map(l => l.gt))),
-    matchedLogsCount: logs?.length
-  })
+
+
 
   // Fetch dynamic status options
   let statusOptions = [
