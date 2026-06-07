@@ -171,7 +171,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-foreground/5 sticky top-0">
+            <tr className="border-b border-border bg-card sticky top-0 z-10">
               <th className="text-left px-4 py-2 font-medium text-foreground/50">Ticket</th>
               <th className="text-left px-2 py-2 font-medium text-foreground/50">Customer</th>
               <th className="text-right px-4 py-2 font-medium text-foreground/50">Type</th>
