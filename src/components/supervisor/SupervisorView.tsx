@@ -143,7 +143,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
   return (
     <div className="h-full bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col snap-start snap-always scroll-mt-4">
       {/* ── TOP: Route title + ticket count + icons ── */}
-      <div className="px-4 pt-4 pb-3 border-b border-border rounded-t-2xl bg-card z-10">
+      <div className="px-4 pt-4 pb-3 border-b border-border rounded-t-2xl bg-muted/30 z-10 relative">
         {/* Title */}
         <h2 className="text-xl font-bold text-foreground tracking-tight">
           Route {route.route_name}
@@ -211,8 +211,12 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
       </div>
 
       {/* ── BOTTOM: Assignment + Copy ── */}
-      <div className="border-t border-border bg-foreground/[0.02] px-4 py-3 rounded-b-2xl relative z-20">
-        <div className="flex flex-col gap-2 mb-2.5">
+      <div className="border-t border-border bg-muted/20 px-4 py-4 rounded-b-2xl relative z-20 shadow-[0_-4px_12px_-2px_rgba(0,0,0,0.05)]">
+        <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-1.5">
+          <Truck size={15} className="text-foreground/60"/>
+          Assignment Details
+        </h3>
+        <div className="flex flex-col gap-2 mb-3">
           {/* Row 1: Serial + GT */}
           <div className="grid grid-cols-2 gap-2">
             {/* Serial select */}
