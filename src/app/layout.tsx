@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { OfflineSyncIndicator } from "@/components/shared/OfflineSyncIndicator";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Warehouse Ops",
   description: "Warehouse Operations Management Mobile PWA",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -47,6 +47,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col relative">
         <div className="flex-1 flex flex-col">
           {children}
+          <OfflineSyncIndicator />
         </div>
       </body>
     </html>
