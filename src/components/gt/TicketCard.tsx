@@ -5,16 +5,20 @@ import { getSubIcon } from '@/components/shared/icons'
 import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
 
 export function getStatusColor(statusName: string | null | undefined, options: GTStatusOption[]) {
-  if (!statusName) return { banner: 'bg-primary', badge: '' }
+  if (!statusName) return { bannerClass: 'bg-primary', badgeClass: '', hexColor: null }
   const opt = options.find(o => o.name === statusName)
   const c = opt ? opt.color : 'primary'
   
-  if (c === 'emerald') return { banner: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' }
-  if (c === 'blue') return { banner: 'bg-blue-500', badge: 'bg-blue-50 text-blue-700 border border-blue-200' }
-  if (c === 'rose') return { banner: 'bg-rose-500', badge: 'bg-rose-50 text-rose-700 border border-rose-200' }
-  if (c === 'amber') return { banner: 'bg-amber-500', badge: 'bg-amber-50 text-amber-700 border border-amber-200' }
+  if (c.startsWith('#')) {
+    return { bannerClass: '', badgeClass: '', hexColor: c }
+  }
   
-  return { banner: `bg-${c}-500`, badge: `bg-${c}-50 text-${c}-700 border border-${c}-200` }
+  if (c === 'emerald') return { bannerClass: 'bg-emerald-500', badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200', hexColor: null }
+  if (c === 'blue') return { bannerClass: 'bg-blue-500', badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200', hexColor: null }
+  if (c === 'rose') return { bannerClass: 'bg-rose-500', badgeClass: 'bg-rose-50 text-rose-700 border border-rose-200', hexColor: null }
+  if (c === 'amber') return { bannerClass: 'bg-amber-500', badgeClass: 'bg-amber-50 text-amber-700 border border-amber-200', hexColor: null }
+  
+  return { bannerClass: `bg-${c}-500`, badgeClass: `bg-${c}-50 text-${c}-700 border border-${c}-200`, hexColor: null }
 }
 
 export function TicketCard({ log, index, statusOptions, subCategories, onSave, isSaving }: { log: Log, index: number, statusOptions: GTStatusOption[], subCategories: SubCategoryOption[], onSave: (s: string, r: string) => void, isSaving: boolean }) {
@@ -48,7 +52,10 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
       )}
 
       {/* Top Banner (Status indicator) */}
-      <div className={`h-1.5 w-full rounded-t-xl ${colors.banner}`} />
+      <div 
+        className={`h-1.5 w-full rounded-t-xl ${colors.bannerClass}`} 
+        style={colors.hexColor ? { backgroundColor: colors.hexColor } : {}}
+      />
       
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
@@ -87,8 +94,9 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
              <button 
                onClick={() => setOpen(!open)}
                className={`w-full border rounded-md px-3 py-2.5 text-sm shadow-sm flex items-center justify-between font-medium text-left transition-colors ${
-                 status ? currentColors.badge : 'bg-background border-input text-foreground/40 hover:bg-muted'
+                 status ? currentColors.badgeClass : 'bg-background border-input text-foreground/40 hover:bg-muted'
                }`}
+               style={status && currentColors.hexColor ? { backgroundColor: currentColors.hexColor + '1A', borderColor: currentColors.hexColor + '33', color: currentColors.hexColor } : {}}
              >
                <span>
                  {status || '— Select Status —'}
@@ -106,12 +114,17 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
                        className={`px-3 py-2.5 text-sm rounded-md cursor-pointer flex items-center justify-between ${status === opt.name ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted font-medium'}`}
                      >
                        <span>{opt.name}</span>
-                       <div className={`w-2 h-2 rounded-full ${
-                         opt.color === 'emerald' ? 'bg-emerald-500' : 
-                         opt.color === 'blue' ? 'bg-blue-500' : 
-                         opt.color === 'rose' ? 'bg-rose-500' : 
-                         opt.color === 'amber' ? 'bg-amber-500' : 'bg-primary'
-                       }`} />
+                       <div 
+                         className={`w-2 h-2 rounded-full ${
+                           !opt.color.startsWith('#') ? (
+                             opt.color === 'emerald' ? 'bg-emerald-500' : 
+                             opt.color === 'blue' ? 'bg-blue-500' : 
+                             opt.color === 'rose' ? 'bg-rose-500' : 
+                             opt.color === 'amber' ? 'bg-amber-500' : 'bg-primary'
+                           ) : ''
+                         }`} 
+                         style={opt.color.startsWith('#') ? { backgroundColor: opt.color } : {}}
+                       />
                      </div>
                    ))}
                  </div>
