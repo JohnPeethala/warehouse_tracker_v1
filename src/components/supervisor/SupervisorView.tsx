@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, memo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ChevronLeft, ChevronRight, Calendar, LogOut,
@@ -8,28 +8,17 @@ import {
   ArrowUpCircle, RefreshCw, Wrench, Hammer, AlertTriangle,
   HelpCircle, User, Copy, Check, MapPin
 } from 'lucide-react'
-import { createClient } from '@/utils/supabase/client'
+import { updateDispatchLogs } from '@/services/database'
 import { CalendarPicker } from '@/components/shared/CalendarPicker'
 import { getSubIcon } from '@/components/shared/icons'
 
-/* ─── Types ─────────────────────────────────────────── */
-type Log = {
-  id: string; ticket_id: string; route_name: string | null
-  vehicle_no: string | null; driver_name: string | null; gt: string | null
-  vehicle_serial: number | null
-  contact_name: string | null; location: string | null
-  sub_category: string | null; ticket_status: string | null; notes: string | null
-}
-type Vehicle  = { id: string; vehicle_no: string; default_driver: string | null }
-type GTMember = { id: string; name: string }
-type RouteGroup = {
-  route_name: string; logs: Log[]
-  vehicle_no: string; driver_name: string; gt: string
-  vehicle_serial: number | null
-}
+import type { Log, Vehicle, RouteGroup, GTMember, SubCategoryOption } from '@/types/models'
+
 type Props = {
   selectedDate: string; logs: Log[]
-  vehicles: Vehicle[]; groundTeam: GTMember[]; userName: string
+  vehicles: Vehicle[];  groundTeam: GTMember[]
+  subCategories: SubCategoryOption[]
+  userName: string
 }
 
 /* ─── Helpers ────────────────────────────────────────── */
@@ -132,9 +121,10 @@ function CustomSelect({ value, options, onChange, placeholder }: {
 }
 
 /* ─── Route Card ─────────────────────────────────────── */
-function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave, saving }: {
+const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selectedDate, subCategories, onUpdate, onSave, saving }: {
   route: RouteGroup; vehicles: Vehicle[]; groundTeam: GTMember[]
   selectedDate: string
+  subCategories: SubCategoryOption[]
   onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', v: string | number | null) => void
   onSave: (r: string) => void
   saving: boolean
@@ -163,12 +153,14 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
         {/* Sub-category icon chips with v3 colors */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
           {Object.entries(subCounts).map(([sub, count]) => {
-            const { Icon, color, bg } = getSubIcon(sub)
+            const { Icon, color, bg, hexColor } = getSubIcon(sub, subCategories)
             return (
               <div key={sub} title={sub}
-                className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-sm font-semibold ${bg}`}>
-                <Icon size={12} className={color} />
-                <span className={color}>{count}</span>
+                className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-sm font-semibold ${bg}`}
+                style={hexColor ? { backgroundColor: hexColor + '1A', borderColor: hexColor + '33' } : {}}
+              >
+                <Icon size={12} className={color} style={hexColor ? { color: hexColor } : {}} />
+                <span className={color} style={hexColor ? { color: hexColor } : {}}>{count}</span>
               </div>
             )
           })}
@@ -187,7 +179,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
           </thead>
           <tbody>
             {route.logs.map((log) => {
-              const { Icon, color } = getSubIcon(log.sub_category ?? '')
+              const { Icon, color, hexColor } = getSubIcon(log.sub_category ?? '', subCategories)
               return (
                 <tr key={log.id} className="border-b border-border last:border-0 hover:bg-foreground/5 transition-colors">
                   <td className="px-4 py-2.5 font-mono text-xs font-medium text-foreground/60 whitespace-nowrap">
@@ -203,7 +195,7 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-1" title={log.sub_category ?? ''}>
-                      <Icon size={13} className={color} />
+                      <Icon size={13} className={color} style={hexColor ? { color: hexColor } : {}} />
                       {log.ticket_status && (
                         <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
                           {log.ticket_status === 'Delivered' ? '✓' : log.ticket_status === 'Issue' ? '!' : log.ticket_status}
@@ -314,10 +306,10 @@ function RouteCard({ route, vehicles, groundTeam, selectedDate, onUpdate, onSave
       </div>
     </div>
   )
-}
+})
 
 /* ─── Main View ──────────────────────────────────────── */
-export default function SupervisorView({ selectedDate, logs, vehicles, groundTeam, userName }: Props) {
+export default function SupervisorView({ selectedDate, logs, vehicles, groundTeam, subCategories, userName }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
   const [routes, setRoutes] = useState<RouteGroup[]>(() => groupByRoute(logs))
@@ -332,27 +324,28 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
     startTransition(() => router.push(`/mobile/supervisor?date=${d}`))
   }
 
-  function handleUpdate(routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', value: string | number | null) {
+  const handleUpdate = useCallback((routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', value: string | number | null) => {
     setRoutes(prev => prev.map(r => r.route_name === routeName ? { ...r, [field]: value } : r))
-  }
+  }, [])
 
-  async function handleSave(routeName: string) {
+  const handleSave = useCallback(async (routeName: string) => {
     const grp = routes.find(r => r.route_name === routeName)
     if (!grp) return
     setSaving(s => ({ ...s, [routeName]: true }))
     
     const dbSerial = grp.vehicle_serial
-    await createClient().from('dispatch_log').update({
+    await updateDispatchLogs(grp.logs.map(l => l.id), {
       vehicle_serial: dbSerial,
       vehicle_no: grp.vehicle_no || null,
       driver_name: grp.driver_name || null,
       gt: grp.gt || null
-    }).in('id', grp.logs.map(l => l.id))
+    })
     
     setSaving(s => ({ ...s, [routeName]: false }))
-  }
+  }, [routes])
 
   async function handleSignOut() {
+    const { createClient } = await import('@/utils/supabase/client')
     await createClient().auth.signOut()
     router.replace('/login')
   }
@@ -398,16 +391,18 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
         <>
           {/* ── Scrollable Cards ── */}
           <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-none p-3 gap-3">
-            {routes.map(route => (
-              <div key={route.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
-                <RouteCard
-                  route={route}
-                  vehicles={vehicles}
-                  groundTeam={groundTeam}
+            {routes.map(r => (
+              <div key={r.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
+                <RouteCard 
+                  key={r.route_name} 
+                  route={r} 
+                  vehicles={vehicles} 
+                  groundTeam={groundTeam} 
                   selectedDate={selectedDate}
+                  subCategories={subCategories}
                   onUpdate={handleUpdate}
                   onSave={handleSave}
-                  saving={!!saving[route.route_name]}
+                  saving={saving[r.route_name] || false}
                 />
               </div>
             ))}

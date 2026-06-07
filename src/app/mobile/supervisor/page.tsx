@@ -2,21 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import SupervisorView from '@/components/supervisor/SupervisorView'
 
-function sortLogs<T extends { sub_category: string | null }>(logs: T[]): T[] {
-  return logs.sort((a, b) => {
-    const getRank = (sub: string | null) => {
-      if (!sub) return 99
-      const s = sub.toLowerCase()
-      if (s.includes('delivery')) return 1
-      if (s.includes('pickup')) return 2
-      return 3
-    }
-    const rA = getRank(a.sub_category)
-    const rB = getRank(b.sub_category)
-    if (rA !== rB) return rA - rB
-    return (a.sub_category || '').localeCompare(b.sub_category || '')
-  })
-}
+import { sortLogs } from '@/utils/helpers'
 
 export default async function SupervisorPage({
   searchParams,
@@ -60,6 +46,11 @@ export default async function SupervisorPage({
     .eq('role', 'ground')
     .order('name')
 
+  const { data: subCategoriesData } = await supabase
+    .from('settings_sub_categories')
+    .select('name, icon, color')
+    .order('name')
+
   const displayName = profile?.name?.trim()
     || user.email?.split('@')[0] 
     || 'Supervisor'
@@ -70,6 +61,7 @@ export default async function SupervisorPage({
       logs={sortLogs(logs ?? [])}
       vehicles={vehicles ?? []}
       groundTeam={groundTeam ?? []}
+      subCategories={subCategoriesData ?? []}
       userName={displayName}
     />
   )

@@ -2,11 +2,12 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
 import { LogOut } from 'lucide-react'
+import { updateTicketStatus as dbUpdateTicketStatus } from '@/services/database'
 import { CalendarPicker } from '@/components/shared/CalendarPicker'
 import { OdometerLog, Trip } from '@/components/gt/OdometerLog'
-import { TicketCard, Log, StatusOption } from '@/components/gt/TicketCard'
+import { TicketCard } from '@/components/gt/TicketCard'
+import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
 
 type Props = {
   profileId: string
@@ -16,10 +17,11 @@ type Props = {
   assignedDriver: string
   logs: Log[]
   today: string
-  statusOptions: StatusOption[]
+  statusOptions: GTStatusOption[]
+  subCategories: SubCategoryOption[]
 }
 
-export default function GTView({ profileId, userName, trip, assignedVehicle, assignedDriver, logs, today, statusOptions }: Props) {
+export default function GTView({ profileId, userName, trip, assignedVehicle, assignedDriver, logs, today, statusOptions, subCategories }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
@@ -33,6 +35,8 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   }, [logs])
 
   async function handleSignOut() {
+    // Removed createClient to rely on a server action or simpler fetch in future, but for now we need the client to logout
+    const { createClient } = await import('@/utils/supabase/client')
     await createClient().auth.signOut()
     router.replace('/login')
   }
@@ -58,7 +62,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
       gt_updated_at: new Date().toISOString()
     }
 
-    await createClient().from('dispatch_log').update(payload).eq('id', logId)
+    await dbUpdateTicketStatus(logId, payload)
 
     setLocalLogs(prev => prev.map(l => l.id === logId ? { ...l, gt_status: newStatus, remarks, gt_maps_link: gpsLink } : l))
     setSavingLog(null)
@@ -115,6 +119,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
                   log={log} 
                   index={i + 1}
                   statusOptions={statusOptions}
+                  subCategories={subCategories}
                   onSave={(status, remarks) => updateTicketStatus(log.id, status, remarks)}
                   isSaving={savingLog === log.id}
                 />

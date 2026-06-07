@@ -3,25 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import GTView from '@/components/gt/GTView'
 
-function toYMD(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-function sortLogs<T extends { sub_category: string | null }>(logs: T[]): T[] {
-  return logs.sort((a, b) => {
-    const getRank = (sub: string | null) => {
-      if (!sub) return 99
-      const s = sub.toLowerCase()
-      if (s.includes('delivery')) return 1
-      if (s.includes('pickup')) return 2
-      return 3
-    }
-    const rA = getRank(a.sub_category)
-    const rB = getRank(b.sub_category)
-    if (rA !== rB) return rA - rB
-    return (a.sub_category || '').localeCompare(b.sub_category || '')
-  })
-}
+import { toYMD, sortLogs } from '@/utils/helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +35,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
   // Fetch GT trip for today
   const { data: trip } = await supabase
     .from('gt_trips')
-    .select('*')
+    .select('id, odometer_start, odometer_end, vehicle_no')
     .eq('profile_id', user.id)
     .eq('trip_date', today)
     .maybeSingle()
@@ -100,6 +82,12 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
     }))
   }
 
+  // Fetch dynamic sub-categories
+  const { data: subCategoriesData } = await supabase
+    .from('settings_sub_categories')
+    .select('name, icon, color')
+    .order('name')
+
   // Infer the assigned vehicle and driver from today's dispatch log
   const firstValidLog = logs?.find(l => l.vehicle_no || l.driver_name)
   const assignedVehicle = firstValidLog?.vehicle_no || ''
@@ -115,6 +103,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
       logs={sortLogs(logs ?? [])}
       today={today}
       statusOptions={statusOptions}
+      subCategories={subCategoriesData ?? []}
     />
   )
 }

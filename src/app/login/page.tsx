@@ -3,16 +3,31 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useFormStatus } from 'react-dom'
+import { login } from './actions'
 
 const STORAGE_KEY = 'wh_saved_login'
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full mt-1 bg-foreground text-background text-sm font-semibold py-2.5 rounded-lg hover:opacity-80 active:opacity-70 transition-opacity disabled:opacity-40"
+    >
+      {pending ? 'Signing in…' : 'Sign In'}
+    </button>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   // Load saved credentials on mount
   useEffect(() => {
@@ -28,31 +43,20 @@ export default function LoginPage() {
     } catch {
       // ignore
     }
+    
+    // Check URL search params for error messages from server action
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('message')) {
+      setErrorMsg(params.get('message') || '')
+    }
   }, [])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
+  function handleRemember() {
     if (remember) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ email: phone, password }))
     } else {
       localStorage.removeItem(STORAGE_KEY)
     }
-
-    const supabase = createClient()
-    const fakeEmail = `${phone}@warehouse.local`
-    const { error: authError } = await supabase.auth.signInWithPassword({ email: fakeEmail, password })
-
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
-      return
-    }
-
-    router.replace('/')
-    router.refresh()
   }
 
   return (
@@ -84,7 +88,7 @@ export default function LoginPage() {
             Secure Sign In
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form action={login} onSubmit={handleRemember} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="phone" className="text-xs font-medium text-foreground/60">
                 Phone Number
@@ -140,24 +144,18 @@ export default function LoginPage() {
               <span className="text-xs text-foreground/50">Remember my details</span>
             </label>
 
-            {error && (
+            {errorMsg && (
               <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-px">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                {error}
+                {errorMsg}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full mt-1 bg-foreground text-background text-sm font-semibold py-2.5 rounded-lg hover:opacity-80 active:opacity-70 transition-opacity disabled:opacity-40"
-            >
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
+            <SubmitButton />
           </form>
 
           <p className="text-[10px] text-foreground/25 text-center mt-5 leading-relaxed">

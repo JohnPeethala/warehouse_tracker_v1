@@ -7,12 +7,15 @@ import { createClient } from '@/utils/supabase/server'
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
-  const email = formData.get('email') as string
+  const phone = formData.get('phone') as string
   const password = formData.get('password') as string
 
-  if (!email || !password) {
-    redirect('/login?message=Email and password are required')
+  if (!phone || !password) {
+    redirect('/login?message=Phone and password are required')
   }
+
+  const cleanPhone = phone.replace(/\D/g, '')
+  const email = `${cleanPhone}@warehouse.local`
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 

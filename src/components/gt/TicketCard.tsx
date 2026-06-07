@@ -2,22 +2,9 @@ import { useState } from 'react'
 import { MapPin, Check, Copy, ChevronDown } from 'lucide-react'
 import { getSubIcon } from '@/components/shared/icons'
 
-export type Log = {
-  id: string
-  ticket_id: string
-  route_name: string | null
-  vehicle_no: string | null
-  contact_name: string | null
-  location: string | null
-  sub_category: string | null
-  gt_status: string | null
-  remarks: string | null
-  gt_maps_link: string | null
-}
+import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
 
-export type StatusOption = { name: string; color: string }
-
-export function getStatusColor(statusName: string | null, options: StatusOption[]) {
+export function getStatusColor(statusName: string | null | undefined, options: GTStatusOption[]) {
   if (!statusName) return { banner: 'bg-primary', badge: '' }
   const opt = options.find(o => o.name === statusName)
   const c = opt ? opt.color : 'primary'
@@ -30,7 +17,7 @@ export function getStatusColor(statusName: string | null, options: StatusOption[
   return { banner: `bg-${c}-500`, badge: `bg-${c}-50 text-${c}-700 border border-${c}-200` }
 }
 
-export function TicketCard({ log, index, statusOptions, onSave, isSaving }: { log: Log, index: number, statusOptions: StatusOption[], onSave: (s: string, r: string) => void, isSaving: boolean }) {
+export function TicketCard({ log, index, statusOptions, subCategories, onSave, isSaving }: { log: Log, index: number, statusOptions: GTStatusOption[], subCategories: SubCategoryOption[], onSave: (s: string, r: string) => void, isSaving: boolean }) {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState(log.gt_status || '')
   const [remarks, setRemarks] = useState(log.remarks || '')
@@ -38,7 +25,7 @@ export function TicketCard({ log, index, statusOptions, onSave, isSaving }: { lo
 
   const colors = getStatusColor(log.gt_status, statusOptions)
   const currentColors = getStatusColor(status, statusOptions)
-  const { Icon: SubIcon, color: subColor, bg: subBg } = getSubIcon(log.sub_category || '')
+  const { Icon: SubIcon, color: subColor, bg: subBg, hexColor } = getSubIcon(log.sub_category || '', subCategories)
 
   function handleCopy() {
     const lines = [
@@ -72,9 +59,16 @@ export function TicketCard({ log, index, statusOptions, onSave, isSaving }: { lo
             </h3>
           </div>
           <div className="text-right flex flex-col items-end gap-1.5">
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border ${subBg}`} title={log.sub_category || 'Other'}>
-              <SubIcon size={12} className={subColor} />
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${subColor}`}>
+            <div 
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-full border ${subBg}`} 
+              title={log.sub_category || 'Other'}
+              style={hexColor ? { backgroundColor: hexColor + '1A', borderColor: hexColor + '33' } : {}}
+            >
+              <SubIcon size={12} className={subColor} style={hexColor ? { color: hexColor } : {}} />
+              <span 
+                className={`text-[10px] font-bold uppercase tracking-wider ${subColor}`}
+                style={hexColor ? { color: hexColor } : {}}
+              >
                 {log.sub_category || 'Other'}
               </span>
             </div>
