@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { OfflineSyncIndicator } from "@/components/shared/OfflineSyncIndicator";
+import { InstallPrompt } from "@/components/shared/InstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
         <div className="flex-1 flex flex-col">
           {children}
           <OfflineSyncIndicator />
+          <InstallPrompt />
         </div>
       </body>
     </html>
