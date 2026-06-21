@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { LogOut, Copy, Check } from 'lucide-react'
 import { updateTicketStatus as dbUpdateTicketStatus } from '@/services/database'
 import { CalendarPicker } from '@/components/shared/CalendarPicker'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { OdometerLog, Trip } from '@/components/gt/OdometerLog'
 import { TicketCard } from '@/components/gt/TicketCard'
 import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
@@ -28,6 +29,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
   const [localLogs, setLocalLogs] = useState<Log[]>(logs)
   const [savingLog, setSavingLog] = useState<string | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -140,11 +142,18 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
             <LogOut size={16}/>
           </button>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <CalendarPicker value={today} onChange={d => {
             startTransition(() => { router.push(`?date=${d}`) })
           }} />
           <div className="text-sm font-semibold text-foreground/40">{localLogs.length} Assigned</div>
+        </div>
+        <div>
+          <SearchBar 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Search tickets or names..." 
+          />
         </div>
       </header>
 
@@ -180,7 +189,14 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
             </div>
           ) : (
             <div className="space-y-4">
-              {localLogs.map((log, i) => (
+              {localLogs
+                .filter(l => {
+                  if (!searchQuery) return true
+                  const q = searchQuery.toLowerCase()
+                  return l.ticket_id?.toLowerCase().includes(q) || 
+                         l.contact_name?.toLowerCase().includes(q)
+                })
+                .map((log, i) => (
                 <TicketCard 
                   key={log.id} 
                   log={log} 

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { updateDispatchLogs } from '@/services/database'
 import { CalendarPicker } from '@/components/shared/CalendarPicker'
+import { SearchBar } from '@/components/shared/SearchBar'
 import { getSubIcon } from '@/components/shared/icons'
 
 import type { Log, Vehicle, RouteGroup, GTMember, SubCategoryOption } from '@/types/models'
@@ -318,6 +319,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
   const [, startTransition] = useTransition()
   const [routes, setRoutes] = useState<RouteGroup[]>(() => groupByRoute(logs))
   const [saving, setSaving] = useState<Record<string, boolean>>({})
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -375,11 +377,19 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
           </button>
         </div>
         {/* Row 2: Date Picker + Count */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <CalendarPicker value={selectedDate} onChange={handleDateChange} />
           <span className="text-sm font-semibold text-foreground/50 bg-foreground/[0.06] border border-foreground/10 px-3 py-1 rounded-full tabular-nums">
             {routes.length} {routes.length === 1 ? 'route' : 'routes'}
           </span>
+        </div>
+        {/* Row 3: Search */}
+        <div>
+          <SearchBar 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Search tickets or names..." 
+          />
         </div>
       </header>
 
@@ -395,7 +405,22 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
         <>
           {/* ── Scrollable Cards ── */}
           <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-none p-3 gap-3">
-            {routes.map(r => (
+            {routes
+              .map(r => {
+                if (!searchQuery) return r
+                const q = searchQuery.toLowerCase()
+                const matchLogs = r.logs.filter(l => 
+                  l.ticket_id?.toLowerCase().includes(q) || 
+                  l.contact_name?.toLowerCase().includes(q)
+                )
+                if (matchLogs.length > 0 || r.route_name.toLowerCase().includes(q) || r.driver_name?.toLowerCase().includes(q) || r.vehicle_no?.toLowerCase().includes(q)) {
+                  return { ...r, logs: matchLogs.length > 0 ? matchLogs : r.logs }
+                }
+                return null
+              })
+              .filter(Boolean)
+              .map(r => r!)
+              .map(r => (
               <div key={r.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
                 <RouteCard 
                   key={r.route_name} 
