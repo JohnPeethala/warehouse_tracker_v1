@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { MapPin, Check, Copy, ChevronDown } from 'lucide-react'
 import { getSubIcon } from '@/components/shared/icons'
 
-import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
+import type { Log, GTStatusOption, DTStatusOption, SubCategoryOption } from '@/types/models'
 
 export function getStatusColor(statusName: string | null | undefined, options: GTStatusOption[]) {
   if (!statusName) return { bannerClass: 'bg-primary', badgeClass: '', hexColor: null }
@@ -21,14 +21,17 @@ export function getStatusColor(statusName: string | null | undefined, options: G
   return { bannerClass: `bg-${c}-500`, badgeClass: `bg-${c}-50 text-${c}-700 border border-${c}-200`, hexColor: null }
 }
 
-export function TicketCard({ log, index, statusOptions, subCategories, onSave, isSaving }: { log: Log, index: number, statusOptions: GTStatusOption[], subCategories: SubCategoryOption[], onSave: (s: string, r: string) => void, isSaving: boolean }) {
+export function TicketCard({ log, index, statusOptions, dtStatusOptions, subCategories, onSave, isSaving }: { log: Log, index: number, statusOptions: GTStatusOption[], dtStatusOptions: DTStatusOption[], subCategories: SubCategoryOption[], onSave: (s: string, r: string, dt: string | null) => void, isSaving: boolean }) {
   const [open, setOpen] = useState(false)
+  const [openDt, setOpenDt] = useState(false)
   const [status, setStatus] = useState(log.gt_status || '')
+  const [dtStatus, setDtStatus] = useState(log.dt_status || '')
   const [remarks, setRemarks] = useState(log.remarks || '')
   const [copied, setCopied] = useState(false)
 
   const colors = getStatusColor(log.gt_status, statusOptions)
   const currentColors = getStatusColor(status, statusOptions)
+  const dtColors = getStatusColor(dtStatus, dtStatusOptions)
   const { Icon: SubIcon, color: subColor, bg: subBg, hexColor } = getSubIcon(log.sub_category || '', subCategories)
 
   function handleCopy() {
@@ -132,6 +135,49 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
              )}
           </div>
 
+          <div className="relative">
+             <label className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1.5 block">Update DT Status</label>
+             <button 
+               onClick={() => setOpenDt(!openDt)}
+               className={`w-full border rounded-md px-3 py-2.5 text-sm shadow-sm flex items-center justify-between font-medium text-left transition-colors ${
+                 dtStatus ? dtColors.badgeClass : 'bg-background border-input text-foreground/40 hover:bg-muted'
+               }`}
+               style={dtStatus && dtColors.hexColor ? { backgroundColor: dtColors.hexColor + '1A', borderColor: dtColors.hexColor + '33', color: dtColors.hexColor } : {}}
+             >
+               <span>
+                 {dtStatus || '— Select DT Status —'}
+               </span>
+               <ChevronDown size={14} className={dtStatus ? '' : 'text-foreground/40'}/>
+             </button>
+
+             {openDt && (
+               <div className="absolute top-full left-0 mt-1 z-[100] w-full bg-card border border-border rounded-lg shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                 <div className="p-1">
+                   {dtStatusOptions.map(opt => (
+                     <div 
+                       key={opt.name}
+                       onClick={() => { setDtStatus(opt.name); setOpenDt(false) }}
+                       className={`px-3 py-2.5 text-sm rounded-md cursor-pointer flex items-center justify-between ${dtStatus === opt.name ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted font-medium'}`}
+                     >
+                       <span>{opt.name}</span>
+                       <div 
+                         className={`w-2 h-2 rounded-full ${
+                           !opt.color.startsWith('#') ? (
+                             opt.color === 'emerald' ? 'bg-emerald-500' : 
+                             opt.color === 'blue' ? 'bg-blue-500' : 
+                             opt.color === 'rose' ? 'bg-rose-500' : 
+                             opt.color === 'amber' ? 'bg-amber-500' : 'bg-primary'
+                           ) : ''
+                         }`} 
+                         style={opt.color.startsWith('#') ? { backgroundColor: opt.color } : {}}
+                       />
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             )}
+          </div>
+
           <div>
              <label className="text-xs font-medium text-foreground/40 uppercase tracking-wide mb-1.5 block">Remarks</label>
              <div className="relative">
@@ -147,8 +193,8 @@ export function TicketCard({ log, index, statusOptions, subCategories, onSave, i
 
           <div className="flex gap-2">
             <button 
-              onClick={() => onSave(status, remarks)}
-              disabled={!status || (status === log.gt_status && remarks === log.remarks)}
+              onClick={() => onSave(status, remarks, dtStatus)}
+              disabled={!status || (status === log.gt_status && remarks === log.remarks && dtStatus === log.dt_status)}
               className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all disabled:opacity-50"
             >
               <Check size={14}/>

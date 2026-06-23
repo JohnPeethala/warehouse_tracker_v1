@@ -43,7 +43,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
   // Fetch dispatch logs assigned to this GT for today
   let query = supabase
     .from('dispatch_log')
-    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, vehicle_serial, contact_name, location, sub_category, ticket_status, gt_status, remarks, notes, gt_maps_link')
+    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, vehicle_serial, contact_name, location, sub_category, dt_status, gt_status, remarks, notes, gt_maps_link')
     .eq('scheduled_date', today)
 
   if (gtName) {
@@ -77,6 +77,19 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
     }))
   }
 
+  // Fetch dt status options
+  let dtStatusOptions: any[] = []
+  const { data: dbDtStatuses, error: dtError } = await supabase
+    .from('dt_status_options')
+    .select('status_name, color')
+    .order('sort_order')
+  if (dbDtStatuses && !dtError && dbDtStatuses.length > 0) {
+    dtStatusOptions = dbDtStatuses.map(s => ({
+      name: s.status_name,
+      color: s.color || 'primary'
+    }))
+  }
+
   // Fetch dynamic sub-categories
   const { data: subCategoriesData } = await supabase
     .from('settings_sub_categories')
@@ -98,6 +111,7 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
       logs={sortLogs(logs ?? [])}
       today={today}
       statusOptions={statusOptions}
+      dtStatusOptions={dtStatusOptions}
       subCategories={subCategoriesData ?? []}
     />
   )

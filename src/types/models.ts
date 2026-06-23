@@ -9,7 +9,7 @@ export type Log = {
   contact_name: string | null
   location: string | null
   sub_category: string | null
-  ticket_status: string | null
+  dt_status?: string | null
   notes: string | null
   gt_status?: string | null
   remarks?: string | null
@@ -37,6 +37,11 @@ export type RouteGroup = {
 }
 
 export type GTStatusOption = {
+  name: string
+  color: string
+}
+
+export type DTStatusOption = {
   name: string
   color: string
 }

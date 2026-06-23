@@ -32,6 +32,7 @@ export async function updateDispatchLogs(logIds: string[], updates: {
 
 export async function updateTicketStatus(logId: string, updates: {
   gt_status: string
+  dt_status?: string | null
   remarks: string | null
   gt_maps_link: string | null
   gt_updated_at: string

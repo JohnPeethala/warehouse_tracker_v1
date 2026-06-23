@@ -8,7 +8,7 @@ import { CalendarPicker } from '@/components/shared/CalendarPicker'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { OdometerLog, Trip } from '@/components/gt/OdometerLog'
 import { TicketCard } from '@/components/gt/TicketCard'
-import type { Log, GTStatusOption, SubCategoryOption } from '@/types/models'
+import type { Log, GTStatusOption, DTStatusOption, SubCategoryOption } from '@/types/models'
 
 type Props = {
   profileId: string
@@ -19,10 +19,11 @@ type Props = {
   logs: Log[]
   today: string
   statusOptions: GTStatusOption[]
+  dtStatusOptions: DTStatusOption[]
   subCategories: SubCategoryOption[]
 }
 
-export default function GTView({ profileId, userName, trip, assignedVehicle, assignedDriver, logs, today, statusOptions, subCategories }: Props) {
+export default function GTView({ profileId, userName, trip, assignedVehicle, assignedDriver, logs, today, statusOptions, dtStatusOptions, subCategories }: Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
@@ -42,7 +43,7 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
     router.replace('/login')
   }
 
-  async function updateTicketStatus(logId: string, newStatus: string, remarks: string) {
+  async function updateTicketStatus(logId: string, newStatus: string, remarks: string, dtStatus?: string | null) {
     setSavingLog(logId)
     
     let gpsLink = null
@@ -57,13 +58,14 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
 
     const payload = {
       gt_status: newStatus,
+      dt_status: dtStatus,
       remarks: remarks || null,
       gt_maps_link: gpsLink || null,
       gt_updated_at: new Date().toISOString()
     }
 
     await dbUpdateTicketStatus(logId, payload)
-    setLocalLogs(prev => prev.map(l => l.id === logId ? { ...l, gt_status: newStatus, remarks, gt_maps_link: gpsLink } : l))
+    setLocalLogs(prev => prev.map(l => l.id === logId ? { ...l, gt_status: newStatus, dt_status: dtStatus, remarks, gt_maps_link: gpsLink } : l))
     setSavingLog(null)
   }
 
@@ -202,8 +204,9 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
                   log={log} 
                   index={i + 1}
                   statusOptions={statusOptions}
+                  dtStatusOptions={dtStatusOptions}
                   subCategories={subCategories}
-                  onSave={(status, remarks) => updateTicketStatus(log.id, status, remarks)}
+                  onSave={(status, remarks, dtStatus) => updateTicketStatus(log.id, status, remarks, dtStatus)}
                   isSaving={savingLog === log.id}
                 />
               ))}

@@ -59,10 +59,6 @@ function buildRouteMsg(route: RouteGroup, date: string) {
   ].join('\n')
 }
 
-const statusCfg: Record<string,string> = {
-  'Delivered': 'text-emerald-700 bg-emerald-50 border-emerald-200',
-  'Issue':     'text-rose-700 bg-rose-50 border-rose-200',
-}
 
 /* ─── Custom Select ───────────────────────────────────── */
 function CustomSelect({ value, options, onChange, placeholder }: {
@@ -197,11 +193,6 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-1" title={log.sub_category ?? ''}>
                       <Icon size={13} className={color} style={hexColor ? { color: hexColor } : {}} />
-                      {log.ticket_status && (
-                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider ${statusCfg[log.ticket_status] ?? 'text-foreground/40 bg-muted border-border'}`}>
-                          {log.ticket_status === 'Delivered' ? '✓' : log.ticket_status === 'Issue' ? '!' : log.ticket_status}
-                        </span>
-                      )}
                     </div>
                   </td>
                 </tr>
