@@ -123,7 +123,7 @@ function CustomSelect({ value, options, onChange, placeholder }: {
 
 
 /* ─── Route Card ─────────────────────────────────────── */
-const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selectedDate, subCategories, onUpdate, onSave, saving }: {
+const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selectedDate, subCategories, onUpdate, onSave, saving, allAssignedVehicles, allAssignedDrivers, allAssignedGTs }: {
   route: RouteGroup; vehicles: Vehicle[]; groundTeam: GTMember[]
   selectedDate: string
   subCategories: SubCategoryOption[]
