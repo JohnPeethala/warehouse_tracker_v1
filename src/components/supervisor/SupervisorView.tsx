@@ -445,9 +445,9 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
           {/* ── Scrollable Cards ── */}
           <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-none p-3 gap-3">
             {(() => {
-              const allAssignedVehicles = routes.map(r => r.vehicle_no).filter(Boolean)
-              const allAssignedDrivers = routes.map(r => r.driver_name).filter(Boolean)
-              const allAssignedGTs = routes.flatMap(r => [r.gt, r.gt2]).filter(Boolean)
+              const allAssignedVehicles = routes.map(r => r.vehicle_no).filter(Boolean) as string[]
+              const allAssignedDrivers = routes.map(r => r.driver_name).filter(Boolean) as string[]
+              const allAssignedGTs = routes.flatMap(r => [r.gt, r.gt2]).filter(Boolean) as string[]
 
               return routes
                 .map(r => {
