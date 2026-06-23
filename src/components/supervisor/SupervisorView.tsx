@@ -130,6 +130,9 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
   onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial'|'gt_id'|'gt2'|'gt2_id', v: string | number | null) => void
   onSave: (r: string) => void
   saving: boolean
+  allAssignedVehicles: string[]
+  allAssignedDrivers: string[]
+  allAssignedGTs: string[]
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -139,6 +142,21 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
     const s = l.sub_category ?? 'Other'
     subCounts[s] = (subCounts[s] ?? 0) + 1
   }
+
+  // Filter logic
+  const availableVehicles = vehicles.filter(v => v.vehicle_no === route.vehicle_no || !allAssignedVehicles.includes(v.vehicle_no))
+  const allDrivers = Array.from(new Set(vehicles.map(v => v.default_driver).filter(Boolean) as string[])).sort()
+  const availableDrivers = allDrivers.filter(d => d === route.driver_name || !allAssignedDrivers.includes(d))
+
+  const availableGT1 = groundTeam.filter(m => {
+    const nm = (m.name ?? '').trim()
+    return nm === route.gt || (!allAssignedGTs.includes(nm) && nm !== route.gt2)
+  })
+
+  const availableGT2 = groundTeam.filter(m => {
+    const nm = (m.name ?? '').trim()
+    return nm === route.gt2 || (!allAssignedGTs.includes(nm) && nm !== route.gt)
+  })
 
   const hasAssignment = route.vehicle_no || route.driver_name || route.gt || route.gt2
 
@@ -214,7 +232,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
           Assignment Details
         </h3>
         <div className="flex flex-col gap-2 mb-3">
-          {/* Row 1: Serial + GT */}
+          {/* Row 1: Serial + Vehicle */}
           <div className="grid grid-cols-2 gap-2">
             {/* Serial select */}
             <div>
@@ -228,45 +246,6 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
               />
             </div>
             
-            {/* GT select */}
-            <div className="relative">
-              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 1</p>
-              <CustomSelect
-                value={route.gt}
-                onChange={v => {
-                  onUpdate(route.route_name, 'gt', v)
-                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
-                  onUpdate(route.route_name, 'gt_id', m ? m.id : null)
-                }}
-                placeholder="— Select —"
-                options={groundTeam.map(m => {
-                  const nm = (m.name ?? '').trim()
-                  return { label: nm, value: nm }
-                })}
-              />
-            </div>
-            
-            {/* GT2 select */}
-            <div className="relative">
-              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 2</p>
-              <CustomSelect
-                value={route.gt2 || ''}
-                onChange={v => {
-                  onUpdate(route.route_name, 'gt2', v)
-                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
-                  onUpdate(route.route_name, 'gt2_id', m ? m.id : null)
-                }}
-                placeholder="— Select —"
-                options={groundTeam.map(m => {
-                  const nm = (m.name ?? '').trim()
-                  return { label: nm, value: nm }
-                })}
-              />
-            </div>
-          </div>
-
-          {/* Row 2: Vehicle No + Driver Name */}
-          <div className="grid grid-cols-2 gap-2">
             {/* Vehicle select */}
             <div className="relative">
               <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Vehicle No.</p>
@@ -278,22 +257,61 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
                   if (selected?.default_driver) onUpdate(route.route_name, 'driver_name', selected.default_driver)
                 }}
                 placeholder="— Select —"
-                options={vehicles.map(v => ({ label: v.vehicle_no, value: v.vehicle_no }))}
+                options={availableVehicles.map(v => ({ label: v.vehicle_no, value: v.vehicle_no }))}
               />
             </div>
+          </div>
 
-            {/* Driver Name */}
+          {/* Row 2: Driver Name */}
+          <div className="relative">
+            <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Driver Name</p>
+            <CustomSelect
+              value={route.driver_name || ''}
+              onChange={v => {
+                const selected = vehicles.find(veh => veh.default_driver === v)
+                onUpdate(route.route_name, 'driver_name', v)
+                if (selected?.vehicle_no) onUpdate(route.route_name, 'vehicle_no', selected.vehicle_no)
+              }}
+              placeholder="— Select —"
+              options={availableDrivers.map(d => ({ label: d, value: d }))}
+            />
+          </div>
+
+          {/* Row 3: GT1 + GT2 */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* GT 1 select */}
             <div className="relative">
-              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Driver Name</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 1</p>
               <CustomSelect
-                value={route.driver_name || ''}
+                value={route.gt}
                 onChange={v => {
-                  const selected = vehicles.find(veh => veh.default_driver === v)
-                  onUpdate(route.route_name, 'driver_name', v)
-                  if (selected?.vehicle_no) onUpdate(route.route_name, 'vehicle_no', selected.vehicle_no)
+                  onUpdate(route.route_name, 'gt', v)
+                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
+                  onUpdate(route.route_name, 'gt_id', m ? m.id : null)
                 }}
                 placeholder="— Select —"
-                options={Array.from(new Set(vehicles.map(v => v.default_driver).filter(Boolean) as string[])).sort().map(d => ({ label: d, value: d }))}
+                options={availableGT1.map(m => {
+                  const nm = (m.name ?? '').trim()
+                  return { label: nm, value: nm }
+                })}
+              />
+            </div>
+            
+            {/* GT 2 select */}
+            <div className="relative">
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 2</p>
+              <CustomSelect
+                value={route.gt2 || ''}
+                onChange={v => {
+                  onUpdate(route.route_name, 'gt2', v)
+                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
+                  onUpdate(route.route_name, 'gt2_id', m ? m.id : null)
+                }}
+                placeholder="— Select —"
+                options={availableGT2.map(m => {
+                  const nm = (m.name ?? '').trim()
+                  return { label: nm, value: nm }
+                })}
               />
             </div>
           </div>
@@ -426,36 +444,45 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
         <>
           {/* ── Scrollable Cards ── */}
           <div className="flex-1 flex overflow-x-auto snap-x snap-mandatory scrollbar-none p-3 gap-3">
-            {routes
-              .map(r => {
-                if (!searchQuery) return r
-                const q = searchQuery.toLowerCase()
-                const matchLogs = r.logs.filter(l => 
-                  l.ticket_id?.toLowerCase().includes(q) || 
-                  l.contact_name?.toLowerCase().includes(q)
-                )
-                if (matchLogs.length > 0 || r.route_name.toLowerCase().includes(q) || r.driver_name?.toLowerCase().includes(q) || r.vehicle_no?.toLowerCase().includes(q)) {
-                  return { ...r, logs: matchLogs.length > 0 ? matchLogs : r.logs }
-                }
-                return null
-              })
-              .filter(Boolean)
-              .map(r => r!)
-              .map(r => (
-              <div key={r.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
-                <RouteCard 
-                  key={r.route_name} 
-                  route={r} 
-                  vehicles={vehicles} 
-                  groundTeam={groundTeam} 
-                  selectedDate={selectedDate}
-                  subCategories={subCategories}
-                  onUpdate={handleUpdate}
-                  onSave={handleSave}
-                  saving={saving[r.route_name] || false}
-                />
-              </div>
-            ))}
+            {(() => {
+              const allAssignedVehicles = routes.map(r => r.vehicle_no).filter(Boolean)
+              const allAssignedDrivers = routes.map(r => r.driver_name).filter(Boolean)
+              const allAssignedGTs = routes.flatMap(r => [r.gt, r.gt2]).filter(Boolean)
+
+              return routes
+                .map(r => {
+                  if (!searchQuery) return r
+                  const q = searchQuery.toLowerCase()
+                  const matchLogs = r.logs.filter(l => 
+                    l.ticket_id?.toLowerCase().includes(q) || 
+                    l.contact_name?.toLowerCase().includes(q)
+                  )
+                  if (matchLogs.length > 0 || r.route_name.toLowerCase().includes(q) || r.driver_name?.toLowerCase().includes(q) || r.vehicle_no?.toLowerCase().includes(q)) {
+                    return { ...r, logs: matchLogs.length > 0 ? matchLogs : r.logs }
+                  }
+                  return null
+                })
+                .filter(Boolean)
+                .map(r => r!)
+                .map(r => (
+                <div key={r.route_name} className="w-[calc(100vw-24px)] shrink-0 snap-center snap-always h-full">
+                  <RouteCard 
+                    key={r.route_name} 
+                    route={r} 
+                    vehicles={vehicles} 
+                    groundTeam={groundTeam} 
+                    selectedDate={selectedDate}
+                    subCategories={subCategories}
+                    onUpdate={handleUpdate}
+                    onSave={handleSave}
+                    saving={saving[r.route_name] || false}
+                    allAssignedVehicles={allAssignedVehicles}
+                    allAssignedDrivers={allAssignedDrivers}
+                    allAssignedGTs={allAssignedGTs}
+                  />
+                </div>
+              ))
+            })()}
           </div>
         </>
       )}
