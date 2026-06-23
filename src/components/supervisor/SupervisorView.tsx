@@ -41,6 +41,9 @@ function groupByRoute(logs: Log[]): RouteGroup[] {
       vehicle_no: log.vehicle_no ?? '',
       driver_name: log.driver_name ?? '',
       gt: log.gt ?? '',
+      gt_id: log.gt_id ?? null,
+      gt2: log.gt2 ?? '',
+      gt2_id: log.gt2_id ?? null,
       vehicle_serial: log.vehicle_serial ?? null
     })
     map.get(key)!.logs.push(log)
@@ -117,12 +120,14 @@ function CustomSelect({ value, options, onChange, placeholder }: {
   )
 }
 
+
+
 /* ─── Route Card ─────────────────────────────────────── */
 const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selectedDate, subCategories, onUpdate, onSave, saving }: {
   route: RouteGroup; vehicles: Vehicle[]; groundTeam: GTMember[]
   selectedDate: string
   subCategories: SubCategoryOption[]
-  onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', v: string | number | null) => void
+  onUpdate: (r: string, f: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial'|'gt_id'|'gt2'|'gt2_id', v: string | number | null) => void
   onSave: (r: string) => void
   saving: boolean
 }) {
@@ -135,7 +140,7 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
     subCounts[s] = (subCounts[s] ?? 0) + 1
   }
 
-  const hasAssignment = route.vehicle_no || route.driver_name || route.gt
+  const hasAssignment = route.vehicle_no || route.driver_name || route.gt || route.gt2
 
   return (
     <div className="h-full bg-card border border-border rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] flex flex-col snap-start snap-always scroll-mt-4">
@@ -225,10 +230,32 @@ const RouteCard = memo(function RouteCard({ route, vehicles, groundTeam, selecte
             
             {/* GT select */}
             <div className="relative">
-              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team</p>
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 1</p>
               <CustomSelect
                 value={route.gt}
-                onChange={v => onUpdate(route.route_name, 'gt', v)}
+                onChange={v => {
+                  onUpdate(route.route_name, 'gt', v)
+                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
+                  onUpdate(route.route_name, 'gt_id', m ? m.id : null)
+                }}
+                placeholder="— Select —"
+                options={groundTeam.map(m => {
+                  const nm = (m.name ?? '').trim()
+                  return { label: nm, value: nm }
+                })}
+              />
+            </div>
+            
+            {/* GT2 select */}
+            <div className="relative">
+              <p className="text-xs font-bold text-foreground/40 uppercase tracking-wide mb-1.5">Ground Team 2</p>
+              <CustomSelect
+                value={route.gt2 || ''}
+                onChange={v => {
+                  onUpdate(route.route_name, 'gt2', v)
+                  const m = groundTeam.find(gtm => (gtm.name ?? '').trim() === v)
+                  onUpdate(route.route_name, 'gt2_id', m ? m.id : null)
+                }}
                 placeholder="— Select —"
                 options={groundTeam.map(m => {
                   const nm = (m.name ?? '').trim()
@@ -321,7 +348,7 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
     startTransition(() => router.push(`/mobile/supervisor?date=${d}`))
   }
 
-  const handleUpdate = useCallback((routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial', value: string | number | null) => {
+  const handleUpdate = useCallback((routeName: string, field: 'vehicle_no'|'driver_name'|'gt'|'vehicle_serial'|'gt_id'|'gt2'|'gt2_id', value: string | number | null) => {
     setRoutes(prev => prev.map(r => r.route_name === routeName ? { ...r, [field]: value } : r))
   }, [])
 
@@ -335,7 +362,10 @@ export default function SupervisorView({ selectedDate, logs, vehicles, groundTea
       vehicle_serial: dbSerial,
       vehicle_no: grp.vehicle_no || null,
       driver_name: grp.driver_name || null,
-      gt: grp.gt || null
+      gt: grp.gt || null,
+      gt_id: grp.gt_id || null,
+      gt2: grp.gt2 || null,
+      gt2_id: grp.gt2_id || null
     })
     
     setSaving(s => ({ ...s, [routeName]: false }))

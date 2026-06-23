@@ -5,6 +5,9 @@ export type Log = {
   vehicle_no: string | null
   driver_name: string | null
   gt: string | null
+  gt_id: string | null
+  gt2: string | null
+  gt2_id: string | null
   vehicle_serial: number | null
   contact_name: string | null
   location: string | null
@@ -33,6 +36,9 @@ export type RouteGroup = {
   vehicle_no: string
   driver_name: string
   gt: string
+  gt_id: string | null
+  gt2: string | null
+  gt2_id: string | null
   vehicle_serial: number | null
 }
 

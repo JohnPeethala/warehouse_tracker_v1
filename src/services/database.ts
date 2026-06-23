@@ -6,6 +6,9 @@ export async function updateDispatchLogs(logIds: string[], updates: {
   vehicle_no?: string | null
   driver_name?: string | null
   gt?: string | null
+  gt_id?: string | null
+  gt2?: string | null
+  gt2_id?: string | null
 }, isSync = false) {
   if (!isSync && typeof window !== 'undefined' && !navigator.onLine) {
     await addToQueue('update_dispatch_logs', { logIds, updates })

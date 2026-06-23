@@ -43,13 +43,13 @@ export default async function GroundTeamPage(props: { searchParams: Promise<{ da
   // Fetch dispatch logs assigned to this GT for today
   let query = supabase
     .from('dispatch_log')
-    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, vehicle_serial, contact_name, location, sub_category, dt_status, gt_status, remarks, notes, gt_maps_link')
+    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, gt_id, gt2, gt2_id, vehicle_serial, contact_name, location, sub_category, dt_status, gt_status, remarks, notes, gt_maps_link')
     .eq('scheduled_date', today)
 
   if (gtName) {
-    query = query.or(`gt.ilike.%${gtName}%,gt_id.eq.${user.id}`)
+    query = query.or(`gt.ilike.%${gtName}%,gt_id.eq.${user.id},gt2.ilike.%${gtName}%,gt2_id.eq.${user.id}`)
   } else {
-    query = query.eq('gt_id', user.id)
+    query = query.or(`gt_id.eq.${user.id},gt2_id.eq.${user.id}`)
   }
   
   const { data: logs } = await query.order('vehicle_serial', { ascending: true })

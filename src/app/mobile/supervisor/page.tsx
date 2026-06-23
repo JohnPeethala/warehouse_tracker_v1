@@ -29,7 +29,7 @@ export default async function SupervisorPage({
 
   const { data: logs } = await supabase
     .from('dispatch_log')
-    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, vehicle_serial, contact_name, location, sub_category, dt_status, notes')
+    .select('id, ticket_id, route_name, vehicle_no, driver_name, gt, gt_id, gt2, gt2_id, vehicle_serial, contact_name, location, sub_category, dt_status, notes')
     .gte('scheduled_date', selectedDate)
     .lt('scheduled_date', nextDateStr)
     .order('route_name')
