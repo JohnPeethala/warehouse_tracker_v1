@@ -62,3 +62,37 @@ export async function updateTicketStatus(logId: string, updates: {
     return { data: null, error: err }
   }
 }
+
+export async function upsertGTTrip(payload: any, isSync = false) {
+  if (!isSync && typeof window !== 'undefined' && !navigator.onLine) {
+    await addToQueue('upsert_gt_trip', { payload })
+    return { data: null, error: null }
+  }
+
+  const supabase = createClient()
+  try {
+    let res;
+    if (payload.id) {
+      res = await supabase.from('gt_trips').update(payload).eq('id', payload.id).select().single()
+    } else {
+      res = await supabase.from('gt_trips').insert(payload).select().single()
+    }
+    
+    // If it was an insert but failed because of unique constraint on profile_id+trip_date, fallback to update
+    if (res.error && res.error.code === '23505') {
+       res = await supabase.from('gt_trips').update(payload)
+         .eq('profile_id', payload.profile_id)
+         .eq('trip_date', payload.trip_date)
+         .select().single()
+    }
+
+    if (res.error && res.error.message.includes('Failed to fetch')) throw res.error
+    return res
+  } catch (err: any) {
+    if (!isSync && typeof window !== 'undefined' && err?.message?.includes('Failed to fetch')) {
+      await addToQueue('upsert_gt_trip', { payload })
+      return { data: null, error: null }
+    }
+    return { data: null, error: err }
+  }
+}

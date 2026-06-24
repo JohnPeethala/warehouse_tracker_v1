@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { WifiOff, RefreshCw } from 'lucide-react'
 import { getQueue, removeFromQueue } from '@/services/offlineSync'
-import { updateDispatchLogs, updateTicketStatus } from '@/services/database'
+import { updateDispatchLogs, updateTicketStatus, upsertGTTrip } from '@/services/database'
 
 export function OfflineSyncIndicator() {
   const [isOffline, setIsOffline] = useState(false)
@@ -49,6 +49,8 @@ export function OfflineSyncIndicator() {
           await updateDispatchLogs(item.payload.logIds, item.payload.updates, true)
         } else if (item.action === 'update_ticket_status') {
           await updateTicketStatus(item.payload.logId, item.payload.updates, true)
+        } else if (item.action === 'upsert_gt_trip') {
+          await upsertGTTrip(item.payload.payload, true)
         }
         // If it successfully sent, remove from queue
         await removeFromQueue(item.id)

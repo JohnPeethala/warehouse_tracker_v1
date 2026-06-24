@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { upsertGTTrip } from '@/services/database'
 
 export type Trip = {
   id: string
@@ -23,21 +23,23 @@ export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver,
   })
   const [savingTrip, setSavingTrip] = useState(false)
 
-  async function saveTrip(field: keyof Trip, value: string | number | null) {
-    const newVal = { ...tripState, [field]: value }
-    setTripState(newVal)
+  async function saveTrip() {
     setSavingTrip(true)
 
     const payload = {
+      id: tripState.id || undefined,
       profile_id: profileId,
       trip_date: today,
-      vehicle_no: newVal.vehicle_no || null,
-      odometer_start: newVal.odometer_start || null,
-      odometer_end: newVal.odometer_end || null,
+      vehicle_no: tripState.vehicle_no || null,
+      odometer_start: tripState.odometer_start || null,
+      odometer_end: tripState.odometer_end || null,
       updated_at: new Date().toISOString()
     }
 
-    await createClient().from('gt_trips').upsert(payload, { onConflict: 'profile_id,trip_date' })
+    const { data } = await upsertGTTrip(payload)
+    if (data && data.id) {
+      setTripState(s => ({ ...s, id: data.id }))
+    }
     setSavingTrip(false)
   }
 
@@ -66,14 +68,13 @@ export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver,
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-wide mb-1">Start (km)</p>
           <input 
             type="number" 
             value={tripState.odometer_start || ''} 
             onChange={e => setTripState(s => ({ ...s, odometer_start: parseFloat(e.target.value) || null }))}
-            onBlur={e => saveTrip('odometer_start', parseFloat(e.target.value) || null)}
             placeholder="e.g. 45000"
             className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
           />
@@ -84,12 +85,21 @@ export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver,
             type="number" 
             value={tripState.odometer_end || ''} 
             onChange={e => setTripState(s => ({ ...s, odometer_end: parseFloat(e.target.value) || null }))}
-            onBlur={e => saveTrip('odometer_end', parseFloat(e.target.value) || null)}
             placeholder="e.g. 45120"
             className="w-full bg-background border border-input focus:border-primary focus:ring-1 focus:ring-primary outline-none rounded-md px-2.5 py-2 text-xs shadow-sm transition-all"
           />
         </div>
       </div>
+      
+      <button
+        onClick={saveTrip}
+        disabled={savingTrip}
+        className="w-full bg-primary text-primary-foreground font-bold py-2 rounded-md text-xs shadow-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {savingTrip ? (
+          <><div className="w-1.5 h-1.5 rounded-full bg-primary-foreground animate-pulse"/>Saving...</>
+        ) : 'Save Reading'}
+      </button>
     </div>
   )
 }

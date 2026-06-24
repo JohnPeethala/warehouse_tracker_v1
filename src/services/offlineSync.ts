@@ -2,7 +2,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb'
 
 export interface SyncAction {
   id?: number
-  action: 'update_dispatch_logs' | 'update_ticket_status'
+  action: 'update_dispatch_logs' | 'update_ticket_status' | 'upsert_gt_trip'
   payload: any
   timestamp: number
 }
