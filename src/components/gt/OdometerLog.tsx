@@ -14,11 +14,13 @@ type Props = {
   today: string
   assignedVehicle: string
   assignedDriver: string
+  gt1Name?: string | null
+  gt2Name?: string | null
   trip: Trip | null
   onClose: () => void
 }
 
-export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver, trip, onClose }: Props) {
+export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver, gt1Name, gt2Name, trip, onClose }: Props) {
   // Trip state
   const [tripState, setTripState] = useState<Partial<Trip>>(trip || { 
     vehicle_no: assignedVehicle 
@@ -46,6 +48,9 @@ export function OdometerLog({ profileId, today, assignedVehicle, assignedDriver,
       vehicle_no: tripState.vehicle_no || null,
       odometer_start: tripState.odometer_start || null,
       odometer_end: tripState.odometer_end || null,
+      driver_name: assignedDriver || null,
+      gt1_name: gt1Name || null,
+      gt2_name: gt2Name || null,
       updated_at: new Date().toISOString()
     }
     if (tripState.id) payload.id = tripState.id

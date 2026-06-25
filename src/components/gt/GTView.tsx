@@ -281,7 +281,9 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
                 profileId={profileId}
                 today={today}
                 assignedVehicle={assignedVehicle}
-                assignedDriver={assignedDriver}
+                assignedDriver={localLogs[0]?.driver_name || assignedDriver}
+                gt1Name={localLogs[0]?.gt || null}
+                gt2Name={localLogs[0]?.gt2 || null}
                 trip={trip}
                 onClose={() => setShowOdometer(false)}
               />
