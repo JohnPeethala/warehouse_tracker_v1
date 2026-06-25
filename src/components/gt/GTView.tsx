@@ -237,6 +237,11 @@ export default function GTView({ profileId, userName, trip, assignedVehicle, ass
                   return l.ticket_id?.toLowerCase().includes(q) || 
                          l.contact_name?.toLowerCase().includes(q)
                 })
+                .sort((a, b) => {
+                  const aDone = a.gt_status?.toLowerCase() === 'done' ? 1 : 0
+                  const bDone = b.gt_status?.toLowerCase() === 'done' ? 1 : 0
+                  return aDone - bDone
+                })
                 .map((log, i) => (
                 <TicketCard 
                   key={log.id} 
