@@ -69,24 +69,11 @@ export async function upsertGTTrip(payload: any, isSync = false) {
     return { data: null, error: null }
   }
 
-  const supabase = createClient()
+  const { upsertGTTripAction } = await import('@/app/actions/odometer')
+  
   try {
-    let res;
-    if (payload.id) {
-      res = await supabase.from('gt_trips').update(payload).eq('id', payload.id).select().single()
-    } else {
-      res = await supabase.from('gt_trips').insert(payload).select().single()
-    }
-    
-    // If it was an insert but failed because of unique constraint on profile_id+trip_date, fallback to update
-    if (res.error && res.error.code === '23505') {
-       res = await supabase.from('gt_trips').update(payload)
-         .eq('profile_id', payload.profile_id)
-         .eq('trip_date', payload.trip_date)
-         .select().single()
-    }
-
-    if (res.error && res.error.message.includes('Failed to fetch')) throw res.error
+    const res = await upsertGTTripAction(payload)
+    if (res.error && res.error.message?.includes('Failed to fetch')) throw res.error
     return res
   } catch (err: any) {
     if (!isSync && typeof window !== 'undefined' && err?.message?.includes('Failed to fetch')) {
